@@ -6,6 +6,9 @@ all: directories server client
 directories:
 	@mkdir -p obj
 	@mkdir -p bin
+	
+obj/common.o: src/common/*.c src/common/*.h
+	$(CC) $(CFLAGS) -c src/common/*.c -o $@
 
 obj/%.o: src/common/%.c
 	$(CC) $(CFLAGS) -c $< -o $@
