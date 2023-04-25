@@ -1,4 +1,4 @@
-CC = gcc
+CC = arch -x86_64 gcc
 CFLAGS = -g -std=c99 -Wall -fsanitize=address,undefined
 
 all: directories server client

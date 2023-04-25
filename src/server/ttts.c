@@ -1,4 +1,7 @@
 #include "ttts.h"
+#define MAX_CLIENTS 100
+
+void *client_handler(void *arg);
 
 int main(int argc, char** argv) {
     
@@ -7,7 +10,10 @@ int main(int argc, char** argv) {
         return 1;
     }
 
+    pthread_t tid[MAX_CLIENTS];
+
     int port, server_socket, client_socket, addr_size;
+    int  client_count = 0;
 
     port = atoi(argv[1]);
     server_socket = check(socket(AF_INET, SOCK_STREAM, 0), "Failed to create socket");
@@ -29,8 +35,19 @@ int main(int argc, char** argv) {
 
         size_t addr_size = sizeof(SA_IN);
         check(client_socket = accept(server_socket, (SA*)&client_addr, (socklen_t*)&addr_size), "Failed to accept connection");
-        
+
+        printf("Client socket: %d\n", client_socket);
         printf("Client connected: %s:%d\n", inet_ntoa(client_addr.sin_addr), ntohs(client_addr.sin_port));
+
+        client_count = client_count+1;
+
+        if (client_count % 2 == 0) {
+            int *arg = malloc(sizeof(int) * 2);
+            arg[0] = client_socket-1;
+            arg[1] = client_socket;
+            pthread_create(&tid[client_count/2-1], NULL, client_handler, (void *)arg);
+        }
+
     }
     return 0;
 }
@@ -40,4 +57,23 @@ int check(int exp, const char* msg) {
         err_and_kill(msg);
     }
     return exp;
+}
+
+void *client_handler(void *arg) {
+    int client_sockets[2];
+    client_sockets[0] = ((int *)arg)[0];
+    client_sockets[1] = ((int *)arg)[1];
+    free(arg);
+    
+    // handle clients
+    printf("Handling two clients\n");
+    // call handleTwoClients() function here
+    printf("Two clients found, making a tictac toe game\n");
+
+
+    // close sockets
+    close(client_sockets[0]);
+    close(client_sockets[1]);
+    
+    return NULL;
 }
