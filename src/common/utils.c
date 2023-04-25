@@ -1,7 +1,7 @@
 #include "utils.h"
 
 // Print error message and exit
-void err_n_kill(const char *fmt, ...) {
+void err_and_kill(const char *fmt, ...) {
 
     // Save errno before calling any other function
     int errnum = errno;

@@ -14,6 +14,7 @@
     #include <stdarg.h>
     #include <fcntl.h>
     #include <sys/time.h>
+    #include <sys/wait.h>
     #include <sys/ioctl.h>
     #include <netdb.h>
 
@@ -24,6 +25,9 @@
 
     void err_and_kill(const char *fmt, ...);
     char* bin2hex(const unsigned char *input, size_t len);
+
+    typedef struct sockaddr SA;
+    typedef struct sockaddr_in SA_IN;
     
 #endif // _UTILS_H_
 
