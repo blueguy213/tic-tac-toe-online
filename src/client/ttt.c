@@ -26,7 +26,7 @@ int main(int argc, char** argv) {
         err_and_kill("Failed to connect to server");
     }
 
-    sprintf(sendline, "PLAY|sree|");
+    snprintf(sendline, "PLAY|sree|", MAX_LINE_LEN);
     send_bytes = strlen(sendline);
 
     if (write(sockfd, sendline, send_bytes) != send_bytes) {
