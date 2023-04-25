@@ -1,0 +1,21 @@
+# Ignore everything except the Makefile, the README, the source files, and the docs.
+
+# Ignore everything be default
+*
+
+# Allow the Makefile
+!Makefile
+
+# Allow the README
+!README.md
+
+# Allow the source files
+!src/
+!src/**/*
+
+# Allow the docs
+!docs/
+!docs/**/*
+
+# Allow the .gitignore
+!.gitignore
