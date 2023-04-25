@@ -6,11 +6,8 @@ all: directories server client
 directories:
 	@mkdir -p obj
 	@mkdir -p bin
-	
-obj/common.o: src/common/*.c src/common/*.h
-	$(CC) $(CFLAGS) -c src/common/*.c -o $@
 
-obj/%.o: src/common/%.c
+obj/%.o: src/common/%.c src/common/%.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
 obj/%.o: src/server/%.c
@@ -19,10 +16,10 @@ obj/%.o: src/server/%.c
 obj/%.o: src/client/%.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
-server: obj/ttts.o obj/utils.o
+server: obj/ttts.o obj/game.o obj/player.o obj/utils.o
 	$(CC) $(CFLAGS) -o bin/ttts $^
 
-client: obj/ttt.o obj/utils.o
+client: obj/ttt.o obj/game.o obj/player.o obj/utils.o
 	$(CC) $(CFLAGS) -o bin/ttt $^
 
 clean:
