@@ -62,6 +62,19 @@ void resign(Game* game, Player* player) {
     }
 }
 
+int check_game(Game* game) {
+    // Check for horizontal wins
+    for (int i = 0; i < 3; i++) {
+        if (game->board[i * 3] == game->board[i * 3 + 1] && game->board[i * 3 + 1] == game->board[i * 3 + 2]) {
+            if (game->board[i * 3] == 'X') {
+                return -1;
+            } else if (game->board[i * 3] == 'O') {
+                return -2;
+            }
+        }
+    }
+}
+
 /**
  *  O | X | O 
  * ---+---+---

@@ -3,6 +3,7 @@
     #define _GAME_H_
 
     #include "utils.h"
+    #include "player.h"
 
     typedef struct {
         char* board; // The game board as a 9 character string (3 rows of 3 characters)
@@ -16,7 +17,7 @@
         // -4 if the game is a draw offered by O
         int turn;
 
-         lock; // Mutex lock for the game state since it is shared between both players' threads
+        pthread_mutex_t lock; // Mutex lock for the game state since it is shared between both players' threads
         Player* playerX; // Pointer to the player with the X role
         Player* playerO; // Pointer to the player with the O role
     } Game;
@@ -27,7 +28,6 @@
     void move(Game* game, Player* player, int x, int y); // Update the game state with the given move by the given player
     void resign(Game* game, Player* player); // Update the game state to a resignation by the given player
     int check_game(Game* game); // Check if the game is over
-    void print_board_as_message(Game* game, int fd); // Return the game board as a message
     void print_board_as_display(Game* game); // Return the game board as a display
 
 #endif // _GAME_H_
