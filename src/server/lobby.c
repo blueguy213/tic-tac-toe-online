@@ -177,13 +177,13 @@ int remove_game(lobby_t* lobby, game_t* game) {
 
 // Print the lobby to stdout
 int print_lobby(lobby_t* lobby) {
-    // Print the players with the players formatted as "name:address\n" 
+    // Print the players with the players formatted as "\tname:name\nSA_IN:address\n" 
     for (int i = 0; i < lobby->num_players; i++) {
-        printf("%s:%s\n", lobby->players[i]->name, lobby->players[i]->address);
+        printf("Player %s: %s\n", lobby->players[i]->name, lobby->players[i]->address);
     }
 
     // Print the games formatted as "board\nstate:state\nx:name:address\no:name:address\n"
     for (int i = 0; i < lobby->num_games; i++) {
-        printf("%s\nstate:%d\nx:%s:%s\no:%s:%s\n", lobby->games[i]->board, lobby->games[i]->state, lobby->games[i]->playerX->name, lobby->games[i]->playerX->address, lobby->games[i]->playerO->name, lobby->games[i]->playerO->address);
+        printf("Game %d:\n\t%s\n\tstate:%d\n\tx:%s:%s\n\to:%s:%s\n", lobby->games[i]->board, lobby->games[i]->state, lobby->games[i]->playerX->name, lobby->games[i]->playerX->address, lobby->games[i]->playerO->name, lobby->games[i]->playerO->address);
     }
 }
