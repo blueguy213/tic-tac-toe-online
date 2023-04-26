@@ -17,6 +17,7 @@ void* listener(void *arg) {
         }
 
         printf("%s", recvline);
+        fflush(stdout);
 
         sleep(1);
     }
@@ -71,7 +72,6 @@ int main(int argc, char** argv) {
     
     while (1) {
         printf("Enter message: ");
-        fflush(stdout);
         fgets(sendline, MAX_LINE_LEN, stdin);
         send_bytes = strlen(sendline);
 
