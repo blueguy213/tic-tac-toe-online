@@ -24,7 +24,7 @@
     #define SOCKET_ERROR (-1)
 
     void* handle_connection(void* p_client_socket);
-    void handleTwoClients(player_t player1, player_t player2)
+    void handleTwoClients(player_t player1, player_t player2);
     int check(int exp, const char* msg);
     int send_to_socket(int socket, const char *str);
 
