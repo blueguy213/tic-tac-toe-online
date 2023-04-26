@@ -13,11 +13,11 @@
         char* name; // The player's name (up to 255 characters)
         SA_IN address; // The player's client address (IP and port)
         int socket; // The player's socket file descriptor on the server
-        pid_t pid; // The process ID of the server thread handling the player
-        (struct Game)* game; // The game the player is in (mutable state)
+        pthread_t tid; // The process ID of the server thread handling the player
+        struct Game *game; // The game the player is in (mutable state)
     } Player;
 
-    Player* new_player(char role, char *name, SA_IN address, int socket, pid_t pid);
+    Player* new_player(char role, char *name, SA_IN address, int socket, pthread_t tid);
     void free_player(Player* player);
     int is_player(Player* player, char *name, SA_IN address);
 

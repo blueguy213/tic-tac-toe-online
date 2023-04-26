@@ -1,11 +1,11 @@
 #include "utils.h"
 
-Player* new_player(char role, char *name, SA_IN address, int socket, pid_t pid) {
+Player* new_player(char role, char *name, SA_IN address, int socket, pthread_t tid) {
     Player* player = malloc(sizeof(Player));
     player->address = address;
     player->socket = socket;
     player->role = role;
-    player->pid = pid;
+    player->tid = tid;
     player->name = name;
     return player;
 }
