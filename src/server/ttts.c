@@ -1,5 +1,4 @@
 #include "ttts.h"
-#define MAX_CLIENTS 100
 
 void *client_handler(void *arg);
 
@@ -11,10 +10,11 @@ int main(int argc, char** argv) {
         return 1;
     }
 
-    pthread_t tid[MAX_CLIENTS];
-
-    int port, server_socket, client_socket, addr_size;
-    int  client_count = 0;
+    // Declare local variables
+    int port, server_socket, client_socket, addr_size, player_count = 0;
+    Player* players = malloc(sizeof(Player) * MAX_PLAYER_COUNT);
+    Player* waiting = NULL;
+    // int  client_count = 0;
 
     // Convert port number to integer
     port = check(atoi(argv[1]), "Not a port");
@@ -47,14 +47,20 @@ int main(int argc, char** argv) {
         printf("Client socket: %d\n", client_socket);
         printf("Client connected: %s:%d\n", inet_ntoa(client_addr.sin_addr), ntohs(client_addr.sin_port));
 
-        client_count = client_count+1;
+        player_count = player_count + 1;
 
-        if (client_count % 2 == 0) {
-            int *arg = malloc(sizeof(int) * 2);
-            arg[0] = client_socket-1;
-            arg[1] = client_socket;
-            pthread_create(&tid[client_count/2-1], NULL, client_handler, (void *)arg);
-        }
+        // Read the client's message
+        char recvline[MAX_LINE_LEN];
+        memset(recvline, 0, MAX_LINE_LEN);
+        check(read(client_socket, recvline, MAX_LINE_LEN - 1), "Failed to read from socket");
+        printf("Client message: %s\n", recvline);
+
+        // if (player_count % 2 == 0) {
+        //     int *arg = malloc(sizeof(int) * 2);
+        //     arg[0] = client_socket-1;
+        //     arg[1] = client_socket;
+        //     pthread_create(&tid[player_count/2-1], NULL, client_handler, (void *)arg);
+        // }
 
     }
     return 0;

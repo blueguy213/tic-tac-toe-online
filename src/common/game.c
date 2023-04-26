@@ -19,49 +19,53 @@ void free_game(Game* game) {
 }
 
 void draw(Game* game, Player* player) {
-    if (game->turn > 0) {
+    if (game->state > 0) {
         if (player->role == 'X') {
-            game->turn = -3;
+            game->state = X_OFFERED_DRAW;
         } else {
-            game->turn = -4;
+            game->state = O_OFFERED_DRAW;
         }
     } else {
         if (player->role == 'X') {
-            game->turn = 0;
+            game->state = DRAW;
         } else {
-            game->turn = 0;
+            game->state = DRAW;
         }
     }
 }
 
 void move(Game* game, Player* player, int x, int y) {
-    if (game->turn > 0) {
+    if (game->state > 0) {
         if (player->role == 'X') {
             game->board[x + y * 3] = 'X';
-            game->turn = 2;
+            game->state = O;
         } else {
             game->board[x + y * 3] = 'O';
-            game->turn = 1;
+            game->state = X;
         }
     } else {
         if (player->role == 'X') {
             game->board[x + y * 3] = 'X';
-            game->turn = 2;
+            game->state = O;
         } else {
             game->board[x + y * 3] = 'O';
-            game->turn = 1;
+            game->state = X;
         }
     }
 }
 
 void resign(Game* game, Player* player) {
     if (player->role == 'X') {
-        game->turn = -2;
+        game->state = O_WON;
     } else {
-        game->turn = -1;
+        game->state = X_WON;
     }
 }
 
+/**
+ * Checks if the game is over and updates the game state accordingly.
+ * Returns: 0 if game is still in progress, -1 if X wins, and -2 if O wins, -3 if it's a draw.
+*/
 int check_game(Game* game) {
     // Check for horizontal wins
     for (int i = 0; i < 3; i++) {
@@ -73,6 +77,32 @@ int check_game(Game* game) {
             }
         }
     }
+    // Check for vertical wins
+    for (int i = 0; i < 3; i++) {
+        if (game->board[i] == game->board[i + 3] && game->board[i + 3] == game->board[i + 6]) {
+            if (game->board[i] == 'X') {
+                return -1;
+            } else if (game->board[i] == 'O') {
+                return -2;
+            }
+        }
+    }
+    // Check for diagonal wins
+    if ((game->board[0] == game->board[4] && game->board[4] == game->board[8]) || (game->board[2] == game->board[4] && game->board[4] == game->board[6])) {
+        if (game->board[4] == 'X') {
+            return -1;
+        } else if (game->board[4] == 'O') {
+            return -2;
+        }
+    }
+
+    // Check for draw by checking if there are any empty spaces left
+    for (int i = 0; i < 9; i++) {
+        if (game->board[i] == '.') {
+            return 0;
+        }
+    }
+    return -3;
 }
 
 /**
