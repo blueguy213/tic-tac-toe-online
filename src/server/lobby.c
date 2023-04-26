@@ -172,14 +172,15 @@ int remove_game(lobby_t* lobby, game_t* game) {
 // Print the lobby to stdout
 void print_lobby(lobby_t* lobby) {
     pthread_mutex_lock(&lobby->lock);
-    // Print the players with the players formatted as "\tname:name\nSA_IN:address\n" 
+    // Print the players with the players formatted as "\tname:name\nSA_IN:address\n"
+    printf("Players:\n");
     for (int i = 0; i < lobby->num_players; i++) {
-        printf("Player %s: %s\n", lobby->players[i]->name, lobby->players[i]->address.sin_addr);
+        printf("\t%s\n", lobby->players[i]->name);
     }
 
-    // Print the games formatted as "board\nstate:state\nx:name:address\no:name:address\n"
+    // Print the games formatted as "board\nstate:state\nx:name:address\no:name\n"
     for (int i = 0; i < lobby->num_games; i++) {
-        printf("Game %d:\n\t%s\n\tstate:%d\n\tx:%s:%s\n\to:%s:%s\n", lobby->games[i]->board, lobby->games[i]->state, lobby->games[i]->playerX->name, lobby->games[i]->playerX->address.sin_addr, lobby->games[i]->playerO->name, lobby->games[i]->playerO->address.sin_addr);
+        printf("Game %d:\n\tboard: %s\n\tstate: %d\n\tx: %s\n\to: %s\n", i, lobby->games[i]->board, lobby->games[i]->state, lobby->games[i]->playerX->name, lobby->games[i]->playerO->name);
     }
     pthread_mutex_unlock(&lobby->lock);
 }
