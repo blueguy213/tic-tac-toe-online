@@ -4,5 +4,4 @@
 
     void *receive_messages(void *arg);
     
-
 #endif // _TTT_H_
