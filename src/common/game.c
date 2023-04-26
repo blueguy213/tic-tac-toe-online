@@ -138,7 +138,7 @@ char** gamemaster(game_t* game, char* input, player_t* sender) {
             output[0] = "WAIT|0|";
             char buffer[256 + 8]; // Make sure the buffer is large enough to hold the name and the additional characters.
             // sprintf(buffer, "BEGN|0|X|%s", game->playerX->name);
-            output[1] = strdup(buffer);
+            output[1] = (char*) strdup(buffer);
         }
     } else if (strcmp(code, "MOVE") == 0) {
         if (sender == NULL) {
@@ -167,8 +167,8 @@ char** gamemaster(game_t* game, char* input, player_t* sender) {
             } else {
                 char buffer[32];
                 sprintf(buffer, "MOVD|16|%c|%d,%d|%.9s|", sender->role, x, y, game->board);
-                output[0] = strdup(buffer);
-                output[1] = strdup(buffer);
+                output[0] = (char*) strdup(buffer);
+                output[1] = (char*) strdup(buffer);
             }
         } else {
             output[0] = "INVL|24|That space is occupied.|";

@@ -16,10 +16,10 @@ void free_lobby(lobby_t* lobby) {
     // Lock the lobby mutex
     pthread_mutex_lock(&lobby->lock);
     for (int i = 0; i < lobby->num_players; i++) {
-        free_player(&(lobby->players[i]));
+        free_player(lobby->players[i]);
     }
     for (int i = 0; i < lobby->num_games; i++) {
-        free_game(&(lobby->games[i]));
+        free_game(lobby->games[i]);
     }
     // Unlock the lobby mutex
     pthread_mutex_unlock(&lobby->lock);
@@ -34,7 +34,7 @@ int is_lobby_full(lobby_t* lobby) {
 // Check if a player is in the lobby (by name and address)
 int is_player_in_lobby(lobby_t* lobby, char* name, SA_IN address) {
     for (int i = 0; i < lobby->num_players; i++) {
-        if (is_player(&lobby->players[i], name, address)) {
+        if (is_player(lobby->players[i], name, address)) {
             return 1;
         }
     }
@@ -56,7 +56,7 @@ int add_player(lobby_t* lobby, player_t* player) {
     }
     // Check if the player is already in the lobby
     for (int i = 0; i < lobby->num_players; i++) {
-        if (is_player(&lobby->players[i], player->name, player->address)) {
+        if (is_player(lobby->players[i], player->name, player->address)) {
             pthread_mutex_unlock(&lobby->lock);
             return -2;
         }
@@ -84,16 +84,9 @@ int remove_player(lobby_t* lobby, char* name, SA_IN address) {
         pthread_mutex_unlock(&lobby->lock);
         return -1;
     }
-    // Check if the player is in the lobby
-    for (int i = 0; i < lobby->num_players; i++) {
-        if (is_player(&lobby->players[i], name, address)) {
-            pthread_mutex_unlock(&lobby->lock);
-            return -2;
-        }
-    }
     // Check if the player is in a game that is in the lobby
     for (int i = 0; i < lobby->num_games; i++) {
-        if (is_player(&lobby->games[i]->playerX, name, address) || is_player(lobby->games[i]->playerO, name, address)) {
+        if (is_player(lobby->games[i]->playerX, name, address) || is_player(lobby->games[i]->playerO, name, address)) {
             pthread_mutex_unlock(&lobby->lock);
             return -3;
         }
@@ -101,8 +94,8 @@ int remove_player(lobby_t* lobby, char* name, SA_IN address) {
 
     // Remove the player from the lobby and shift the array
     for (int i = 0; i < lobby->num_players; i++) {
-        if (is_player(&lobby->players[i], name, address)) {
-            free_player(&lobby->players[i]);
+        if (is_player(lobby->players[i], name, address)) {
+            free_player(lobby->players[i]);
             for (int j = i; j < lobby->num_players - 1; j++) {
                 lobby->players[j] = lobby->players[j + 1];
             }
@@ -111,6 +104,7 @@ int remove_player(lobby_t* lobby, char* name, SA_IN address) {
             return i;
         }
     }
+    return -2;
 }
 
 /**
@@ -176,14 +170,14 @@ int remove_game(lobby_t* lobby, game_t* game) {
 }
 
 // Print the lobby to stdout
-int print_lobby(lobby_t* lobby) {
+void print_lobby(lobby_t* lobby) {
     // Print the players with the players formatted as "\tname:name\nSA_IN:address\n" 
     for (int i = 0; i < lobby->num_players; i++) {
-        printf("Player %s: %s\n", lobby->players[i]->name, lobby->players[i]->address);
+        printf("Player %s: %s\n", lobby->players[i]->name, lobby->players[i]->address.sin_addr);
     }
 
     // Print the games formatted as "board\nstate:state\nx:name:address\no:name:address\n"
     for (int i = 0; i < lobby->num_games; i++) {
-        printf("Game %d:\n\t%s\n\tstate:%d\n\tx:%s:%s\n\to:%s:%s\n", lobby->games[i]->board, lobby->games[i]->state, lobby->games[i]->playerX->name, lobby->games[i]->playerX->address, lobby->games[i]->playerO->name, lobby->games[i]->playerO->address);
+        printf("Game %d:\n\t%s\n\tstate:%d\n\tx:%s:%s\n\to:%s:%s\n", lobby->games[i]->board, lobby->games[i]->state, lobby->games[i]->playerX->name, lobby->games[i]->playerX->address.sin_addr, lobby->games[i]->playerO->name, lobby->games[i]->playerO->address.sin_addr);
     }
 }
