@@ -7,7 +7,7 @@ lobby_t* new_lobby(char *name, char *password, int max_players) {
     lobby->num_players = 0;
     lobby->max_games = max_players / 2;
     lobby->num_games = 0;
-    lobby->lock = (pthread_mutex_t)PTHREAD_MUTEX_INITIALIZER;
+    lobby->lock = (pthread_mutex_t) PTHREAD_MUTEX_INITIALIZER;
     return lobby;
 }
 
@@ -171,6 +171,7 @@ int remove_game(lobby_t* lobby, game_t* game) {
 
 // Print the lobby to stdout
 void print_lobby(lobby_t* lobby) {
+    pthread_mutex_lock(&lobby->lock);
     // Print the players with the players formatted as "\tname:name\nSA_IN:address\n" 
     for (int i = 0; i < lobby->num_players; i++) {
         printf("Player %s: %s\n", lobby->players[i]->name, lobby->players[i]->address.sin_addr);
@@ -180,4 +181,5 @@ void print_lobby(lobby_t* lobby) {
     for (int i = 0; i < lobby->num_games; i++) {
         printf("Game %d:\n\t%s\n\tstate:%d\n\tx:%s:%s\n\to:%s:%s\n", lobby->games[i]->board, lobby->games[i]->state, lobby->games[i]->playerX->name, lobby->games[i]->playerX->address.sin_addr, lobby->games[i]->playerO->name, lobby->games[i]->playerO->address.sin_addr);
     }
+    pthread_mutex_unlock(&lobby->lock);
 }

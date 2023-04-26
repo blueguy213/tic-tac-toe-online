@@ -8,6 +8,7 @@ game_t* new_game(player_t* x, player_t* o) {
     }
     game->playerX = x;
     game->playerO = o;
+    game->state = UNSTARTED;
     return game;
 }
 

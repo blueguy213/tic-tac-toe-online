@@ -79,7 +79,10 @@ int check(int exp, const char* msg) {
     return exp;
 }
 
+<<<<<<< HEAD
 void handleTwoClients(player_t player1, player_t player2);
+=======
+>>>>>>> e9a7e86ed38cadd0bb676ca266f5adc5951f5277
 
 void *client_handler(void *arg) {
     player_t players[2];
@@ -111,7 +114,7 @@ void handleTwoClients(player_t player1, player_t player2) {
     int socket1 = player1.socket;
     int socket2 = player2.socket;
 
-    game_t* game = new_game();
+    game_t* game;
 
     while (running) {
         FD_ZERO(&readfds); // Clear the file descriptor set
