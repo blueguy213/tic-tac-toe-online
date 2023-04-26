@@ -16,6 +16,8 @@ void* listener(void *arg) {
             err_and_kill("Failed to read from socket");
         }
 
+        printf("%s", recvline);
+
         sleep(1);
     }
 
