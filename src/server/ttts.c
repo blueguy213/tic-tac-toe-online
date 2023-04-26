@@ -79,10 +79,7 @@ int check(int exp, const char* msg) {
     return exp;
 }
 
-<<<<<<< HEAD
 void handleTwoClients(player_t player1, player_t player2);
-=======
->>>>>>> e9a7e86ed38cadd0bb676ca266f5adc5951f5277
 
 void *client_handler(void *arg) {
     player_t players[2];
