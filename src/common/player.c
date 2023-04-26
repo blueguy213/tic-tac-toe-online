@@ -1,7 +1,7 @@
 #include "utils.h"
 
-Player* new_player(char role, char *name, SA_IN address, int socket, pthread_t tid) {
-    Player* player = malloc(sizeof(Player));
+player_t* new_player(char role, char *name, SA_IN address, int socket, pthread_t tid) {
+    player_t* player = malloc(sizeof(player_t));
     player->address = address;
     player->socket = socket;
     player->role = role;
@@ -10,11 +10,11 @@ Player* new_player(char role, char *name, SA_IN address, int socket, pthread_t t
     return player;
 }
 
-void free_player(Player* player) {
+void free_player(player_t* player) {
     free(player->name);
     free(player);
 }
 
-int is_player(Player* player, char *name, SA_IN address) {
+int is_player(player_t* player, char *name, SA_IN address) {
     return strcmp(player->name, name) == 0 && player->address.sin_addr.s_addr == address.sin_addr.s_addr;
 }

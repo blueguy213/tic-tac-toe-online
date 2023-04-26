@@ -1,7 +1,7 @@
 #include "utils.h"
 
-Game* new_game(Player* x, Player* o) {
-    Game* game = malloc(sizeof(Game));
+game_t* new_game(player_t* x, player_t* o) {
+    game_t* game = malloc(sizeof(game_t));
     game->board = malloc(9 * sizeof(char));
     for (int i = 0; i < 9; i++) {
         game->board[i] = '.';
@@ -11,14 +11,14 @@ Game* new_game(Player* x, Player* o) {
     return game;
 }
 
-void free_game(Game* game) {
+void free_game(game_t* game) {
     free_player(game->playerO);
     free_player(game->playerX);
     free(game->board);
     free(game);
 }
 
-void draw(Game* game, Player* player) {
+void draw(game_t* game, player_t* player) {
     if (game->state > 0) {
         if (player->role == 'X') {
             game->state = X_OFFERED_DRAW;
@@ -34,7 +34,7 @@ void draw(Game* game, Player* player) {
     }
 }
 
-void move(Game* game, Player* player, int x, int y) {
+void move(game_t* game, player_t* player, int x, int y) {
     if (game->state > 0) {
         if (player->role == 'X') {
             game->board[x + y * 3] = 'X';
@@ -54,7 +54,7 @@ void move(Game* game, Player* player, int x, int y) {
     }
 }
 
-void resign(Game* game, Player* player) {
+void resign(game_t* game, player_t* player) {
     if (player->role == 'X') {
         game->state = O_WON;
     } else {
@@ -66,7 +66,7 @@ void resign(Game* game, Player* player) {
  * Checks if the game is over and updates the game state accordingly.
  * Returns: 0 if game is still in progress, -1 if X wins, and -2 if O wins, -3 if it's a draw.
 */
-int check_game(Game* game) {
+int check_game(game_t* game) {
     // Check for horizontal wins
     for (int i = 0; i < 3; i++) {
         if (game->board[i * 3] == game->board[i * 3 + 1] && game->board[i * 3 + 1] == game->board[i * 3 + 2]) {
@@ -114,7 +114,7 @@ int check_game(Game* game) {
  * 
  * Example board display
 */
-void print_board_as_display(Game* game) {
+void print_board_as_display(game_t* game) {
     printf(" %c | %c | %c \n---+---+---\n %c | %c | %c \n---+---+---\n %c | %c | %c \n", game->board[0], game->board[1], game->board[2], game->board[3], game->board[4], game->board[5], game->board[6], game->board[7], game->board[8]);
 }
 

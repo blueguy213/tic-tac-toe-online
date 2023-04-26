@@ -1,5 +1,7 @@
 #ifndef _TTTS_H_
 
+    #define _TTTS_H_
+
     #include "../common/utils.h"
     #include <stdio.h>
     #include <stdlib.h>
@@ -13,6 +15,8 @@
     #include <sys/select.h>
     #include <stdbool.h>
 
+    #include "lobby.h"
+
     #define BUFFER_SIZE 1024
 
     #define THREAD_POOL_SIZE 10
@@ -22,4 +26,4 @@
     void* handle_connection(void* p_client_socket);
     int check(int exp, const char* msg);
 
-#endif
+#endif // _TTTS_H_
