@@ -43,9 +43,10 @@ int main(int argc, char** argv) {
         client_count = client_count+1;
 
         if (client_count % 2 == 0) {
-            int *arg = malloc(sizeof(int) * 2);
+            int *arg = malloc(sizeof(int) * 3);
             arg[0] = client_socket-1;
             arg[1] = client_socket;
+            arg[2] = tid;
             pthread_create(&tid[client_count/2-1], NULL, client_handler, (void *)arg);
         }
 
