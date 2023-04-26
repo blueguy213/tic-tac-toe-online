@@ -32,12 +32,13 @@
         player_t* playerO; // Pointer to the player with the O role
     } game_t;
 
-    game_t* new_game(); // Initialize a new game and return a pointer to it
-    void free_game(game_t* game); // Free the memory allocated for a game
-    void draw(game_t* game, player_t* player); // Update the game state to a draw by the given player
-    void move(game_t* game, player_t* player, int x, int y); // Update the game state with the given move by the given player
-    void resign(game_t* game, player_t* player); // Update the game state to a resignation by the given player
-    void print_board_as_display(game_t* game); // Return the game board as a display
-    int check_game(game_t* game); // Check if the game is over
+    Game* new_game(); // Initialize a new game and return a pointer to it
+    void free_game(Game* game); // Free the memory allocated for a game
+    void draw(Game* game, Player* player); // Update the game state to a draw by the given player
+    void move(Game* game, Player* player, int x, int y); // Update the game state with the given move by the given player
+    void resign(Game* game, Player* player); // Update the game state to a resignation by the given player
+    void print_board_as_display(Game* game); // Return the game board as a display
+    int check_game(Game* game); // Check if the game is over
+    char** gamemaster(game_t* game, char* input, player_t* game_over); // Handle the game logic
 
 #endif // _GAME_H_
