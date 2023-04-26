@@ -60,12 +60,16 @@ int check(int exp, const char* msg) {
     return exp;
 }
 
-void handleTwoClients(int socket1, int socket2);
+void handleTwoClients(int socket1, int socket2, int tid);
 
 void *client_handler(void *arg) {
     int client_sockets[2];
+    int tid = -1;
+
     client_sockets[0] = ((int *)arg)[0];
     client_sockets[1] = ((int *)arg)[1];
+    tid = ((int *)arg)[2];
+
     free(arg);
     
     // handle clients
@@ -73,7 +77,7 @@ void *client_handler(void *arg) {
     // call handleTwoClients() function here
     printf("Two clients found, making a tictac toe game\n");
 
-    handleTwoClients(client_sockets[0], client_sockets[1]);
+    handleTwoClients(client_sockets[0], client_sockets[1], tid);
 
     // close sockets
     close(client_sockets[0]);
@@ -82,11 +86,13 @@ void *client_handler(void *arg) {
     return NULL;
 }
 
-void handleTwoClients(int socket1, int socket2) {
+void handleTwoClients(int socket1, int socket2, int tid) {
     fd_set readfds; // File descriptor set for select()
     char buffer[BUFFER_SIZE];
     char reply_buffer[BUFFER_SIZE]; // Add this line to create a buffer for the reply string
     bool running = true;
+
+    Game* game = new_game();
 
     while (running) {
         FD_ZERO(&readfds); // Clear the file descriptor set
@@ -108,7 +114,10 @@ void handleTwoClients(int socket1, int socket2) {
             ssize_t bytes_received = recv(socket1, buffer, BUFFER_SIZE - 1, 0);
             if (bytes_received > 0) {
                 buffer[bytes_received] = '\0';
-                printf("Message from socket1: %s\n", buffer);
+                printf("Message from socket1: [%s]\n", buffer);
+
+                // char** output = gamemaster(game, buffer, NULL);
+
                 sprintf(reply_buffer, "%s", buffer); // Use the reply_buffer here
                 send_to_socket(socket2, reply_buffer); // Pass the reply_buffer instead of sprintf's return value
         } else {

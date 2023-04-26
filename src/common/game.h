@@ -39,5 +39,6 @@
     void resign(Game* game, Player* player); // Update the game state to a resignation by the given player
     void print_board_as_display(Game* game); // Return the game board as a display
     int check_game(Game* game); // Check if the game is over
+    char** gamemaster(Game* game, char* input, Player* sender);
 
 #endif // _GAME_H_
