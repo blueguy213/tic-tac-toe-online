@@ -61,7 +61,6 @@ int check(int exp, const char* msg) {
     return exp;
 }
 
-void handleTwoClients(int socket1, int socket2, int tid);
 
 void *client_handler(void *arg) {
     int client_sockets[2];
@@ -93,7 +92,7 @@ void handleTwoClients(int socket1, int socket2, int tid) {
     char reply_buffer[BUFFER_SIZE]; // Add this line to create a buffer for the reply string
     bool running = true;
 
-    game_t* game = new_game();
+    game_t* game;
 
     while (running) {
         FD_ZERO(&readfds); // Clear the file descriptor set

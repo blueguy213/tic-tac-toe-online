@@ -1,18 +1,22 @@
 #include <pthread.h>
 #include "../common/utils.h"
 
-void *receive_messages(void *arg) {
+void* listener(void *arg) {
+    
     int sockfd = *((int *)arg);
     int n;
     char recvline[MAX_LINE_LEN];
 
-    while ((n = read(sockfd, recvline, MAX_LINE_LEN - 1)) > 0) {
-        recvline[n] = '\0';
-        printf("\nServer reply: %s\nEnter message: ", recvline);
-    }
 
-    if (n < 0) {
-        err_and_kill("Failed to read from socket");
+    while (1) {
+
+        n = read(sockfd, recvline, MAX_LINE_LEN - 1);
+
+        if (n < 0) {
+            err_and_kill("Failed to read from socket");
+        }
+
+        sleep(1);
     }
 
     printf("Server closed connection\n");
@@ -22,8 +26,16 @@ void *receive_messages(void *arg) {
 int main(int argc, char** argv) {
     if (argc != 3) {
         printf("Usage: %s <domain> <port>\n", argv[0]);
+        fflush(stdout);
         return 1;
     }
+
+    // Get the name of the user
+    char name[MAX_NAME_LEN+1];
+    printf("Enter your name: ");
+    fflush(stdout);
+    fgets(name, MAX_NAME_LEN, stdin);
+    name[MAX_NAME_LEN] = '\0';
 
     int sockfd, send_bytes;
     SA_IN server_addr;
@@ -45,13 +57,12 @@ int main(int argc, char** argv) {
         err_and_kill("Failed to connect to server");
     }
 
-    pthread_t receive_thread;
-    if (pthread_create(&receive_thread, NULL, receive_messages, &sockfd) != 0) {
-        err_and_kill("Failed to create receive thread");
-    }
-
+    pthread_t listener_thread;
+    pthread_create(&listener_thread, NULL, listener, (void *)&sockfd);
+    
     while (1) {
         printf("Enter message: ");
+        fflush(stdout);
         fgets(sendline, MAX_LINE_LEN, stdin);
         send_bytes = strlen(sendline);
 

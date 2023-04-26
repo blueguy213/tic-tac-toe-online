@@ -24,6 +24,8 @@
     #define SOCKET_ERROR (-1)
 
     void* handle_connection(void* p_client_socket);
+    void handleTwoClients(int socket1, int socket2, int tid);
     int check(int exp, const char* msg);
+    int send_to_socket(int socket, const char *str);
 
 #endif // _TTTS_H_
