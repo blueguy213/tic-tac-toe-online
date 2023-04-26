@@ -1,4 +1,4 @@
-CC = arch -x86_64 gcc
+CC = gcc
 CFLAGS = -g -std=c99 -Wall -fsanitize=address,undefined
 
 all: directories server client
@@ -16,7 +16,7 @@ obj/%.o: src/server/%.c
 obj/%.o: src/client/%.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
-server: obj/ttts.o obj/game.o obj/player.o obj/utils.o
+server: obj/ttts.o obj/lobby.o obj/game.o obj/player.o obj/utils.o
 	$(CC) $(CFLAGS) -o bin/ttts $^
 
 client: obj/ttt.o obj/game.o obj/player.o obj/utils.o

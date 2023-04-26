@@ -24,6 +24,7 @@ int main(int argc, char** argv) {
     server_addr.sin_family = AF_INET;
     server_addr.sin_addr.s_addr = htonl(INADDR_ANY);
     server_addr.sin_port = htons(port);
+    player_t* previous_player;
     
     check(bind(server_socket, (SA*)&server_addr, sizeof(server_addr)), "Failed to bind");
     check(listen(server_socket, SERVER_BACKLOG), "Failed to listen");
@@ -40,17 +41,35 @@ int main(int argc, char** argv) {
         printf("Client socket: %d\n", client_socket);
         printf("Client connected: %s:%d\n", inet_ntoa(client_addr.sin_addr), ntohs(client_addr.sin_port));
 
-        client_count = client_count+1;
+        // Read the PLAY command from the client
+        char play_command[256];
+        read(client_socket, play_command, sizeof(play_command));
+
+        // Parse the player's name
+        char player_name[256];
+        sscanf(play_command, "PLAY|%[^|]|", player_name);
+
+        // Create a new player
+        player_t *newplayer = new_player('X', player_name, client_addr, client_socket, tid); // 'X' will be replaced with the proper role later
+
+        // Send the WAIT response to the client
+        char wait_response[] = "WAIT";
+        write(client_socket, wait_response, strlen(wait_response));
+
+        client_count = client_count + 1;
 
         if (client_count % 2 == 0) {
-            int *arg = malloc(sizeof(int) * 2);
-            arg[0] = client_socket-1;
-            arg[1] = client_socket;
-            pthread_create(&tid[client_count/2-1], NULL, client_handler, (void *)arg);
+            player_t **arg = malloc(sizeof(player_t*) * 2);
+
+            arg[0] = new_player; // Pass the new player created for client_socket
+            arg[1] = previous_player; // Pass the new player created for client_socket-1
+
+            pthread_create(&tid[client_count / 2 - 1], NULL, client_handler, (void *)arg);
+        } else {
+            previous_player = new_player; // Store the new player to be passed in the next iteration
         }
 
     }
-    return 0;
 }
 
 int check(int exp, const char* msg) {
@@ -60,12 +79,14 @@ int check(int exp, const char* msg) {
     return exp;
 }
 
-void handleTwoClients(int socket1, int socket2);
+void handleTwoClients(player_t player1, player_t player2);
 
 void *client_handler(void *arg) {
-    int client_sockets[2];
-    client_sockets[0] = ((int *)arg)[0];
-    client_sockets[1] = ((int *)arg)[1];
+    player_t players[2];
+
+    players[0] = *((player_t**)arg)[0];
+    players[1] = *((player_t**)arg)[1];
+
     free(arg);
     
     // handle clients
@@ -73,20 +94,24 @@ void *client_handler(void *arg) {
     // call handleTwoClients() function here
     printf("Two clients found, making a tictac toe game\n");
 
-    handleTwoClients(client_sockets[0], client_sockets[1]);
+    handleTwoClients(players[0], players[1]);
 
     // close sockets
-    close(client_sockets[0]);
-    close(client_sockets[1]);
+    close(players[0].socket);
+    close(players[1].socket);
     
     return NULL;
 }
 
-void handleTwoClients(int socket1, int socket2) {
+void handleTwoClients(player_t player1, player_t player2) {
     fd_set readfds; // File descriptor set for select()
     char buffer[BUFFER_SIZE];
     char reply_buffer[BUFFER_SIZE]; // Add this line to create a buffer for the reply string
     bool running = true;
+    int socket1 = player1.socket;
+    int socket2 = player2.socket;
+
+    game_t* game;
 
     while (running) {
         FD_ZERO(&readfds); // Clear the file descriptor set
@@ -108,7 +133,10 @@ void handleTwoClients(int socket1, int socket2) {
             ssize_t bytes_received = recv(socket1, buffer, BUFFER_SIZE - 1, 0);
             if (bytes_received > 0) {
                 buffer[bytes_received] = '\0';
-                printf("Message from socket1: %s\n", buffer);
+                printf("Message from socket1: [%s]\n", buffer);
+
+                // char** output = gamemaster(game, buffer, NULL);
+
                 sprintf(reply_buffer, "%s", buffer); // Use the reply_buffer here
                 send_to_socket(socket2, reply_buffer); // Pass the reply_buffer instead of sprintf's return value
         } else {

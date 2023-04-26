@@ -17,6 +17,10 @@
     #include <sys/wait.h>
     #include <sys/ioctl.h>
     #include <netdb.h>
+    #include <pthread.h>
+    #include <stdbool.h>
+    #include "game.h"
+    #include "player.h"
 
     #define MAX_LINE_LEN 4096
     #define MAX_NAME_LEN 255
