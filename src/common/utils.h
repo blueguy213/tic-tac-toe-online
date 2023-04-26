@@ -18,7 +18,7 @@
     #include <sys/ioctl.h>
     #include <netdb.h>
     #include <pthread.h>
-
+    #include <stdbool.h>
     #include "game.h"
     #include "player.h"
 

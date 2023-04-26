@@ -11,6 +11,7 @@ player_t* new_player(char role, char *name, SA_IN address, int socket, pthread_t
 }
 
 void free_player(player_t* player) {
+    if (player == NULL) return;
     free(player->name);
     free(player);
 }

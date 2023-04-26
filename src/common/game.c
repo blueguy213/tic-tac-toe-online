@@ -12,6 +12,7 @@ game_t* new_game(player_t* x, player_t* o) {
 }
 
 void free_game(game_t* game) {
+    if (game == NULL) return;
     free_player(game->playerO);
     free_player(game->playerX);
     free(game->board);
@@ -118,7 +119,7 @@ void print_board_as_display(game_t* game) {
     printf(" %c | %c | %c \n---+---+---\n %c | %c | %c \n---+---+---\n %c | %c | %c \n", game->board[0], game->board[1], game->board[2], game->board[3], game->board[4], game->board[5], game->board[6], game->board[7], game->board[8]);
 }
 
-char** gamemaster(Game* game, char* input, Player* sender) {
+char** gamemaster(game_t* game, char* input, player_t* sender) {
     char** output = malloc(2 * sizeof(char*));
 
     // Parse input
