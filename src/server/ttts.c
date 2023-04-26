@@ -1,6 +1,7 @@
 #include "ttts.h"
 
 void *client_handler(void *arg);
+int send_to_socket(int socket, const char *str);
 
 int main(int argc, char** argv) {
     
@@ -99,6 +100,7 @@ void *client_handler(void *arg) {
 void handleTwoClients(int socket1, int socket2) {
     fd_set readfds; // File descriptor set for select()
     char buffer[BUFFER_SIZE];
+    char reply_buffer[BUFFER_SIZE]; // Add this line to create a buffer for the reply string
     bool running = true;
 
     while (running) {
@@ -122,7 +124,9 @@ void handleTwoClients(int socket1, int socket2) {
             if (bytes_received > 0) {
                 buffer[bytes_received] = '\0';
                 printf("Message from socket1: %s\n", buffer);
-            } else {
+                sprintf(reply_buffer, "%s", buffer); // Use the reply_buffer here
+                send_to_socket(socket2, reply_buffer); // Pass the reply_buffer instead of sprintf's return value
+        } else {
                 running = false;
             }
         }
@@ -133,9 +137,20 @@ void handleTwoClients(int socket1, int socket2) {
             if (bytes_received > 0) {
                 buffer[bytes_received] = '\0';
                 printf("Message from socket2: %s\n", buffer);
-            } else {
+                sprintf(reply_buffer, "%s", buffer); // Use the reply_buffer here
+                send_to_socket(socket1, reply_buffer); // Pass the reply_buffer instead of sprintf's return value
+        } else {
                 running = false;
             }
         }
     }
+}
+
+int send_to_socket(int socket, const char *str) {
+    ssize_t send_bytes = send(socket, str, strlen(str), 0);
+    if (send_bytes < 0) {
+        perror("Failed to send to socket");
+        return -1;
+    }
+    return 0;
 }

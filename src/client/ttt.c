@@ -1,4 +1,23 @@
+#include <pthread.h>
 #include "../common/utils.h"
+
+void *receive_messages(void *arg) {
+    int sockfd = *((int *)arg);
+    int n;
+    char recvline[MAX_LINE_LEN];
+
+    while ((n = read(sockfd, recvline, MAX_LINE_LEN - 1)) > 0) {
+        recvline[n] = '\0';
+        printf("\nServer reply: %s\nEnter message: ", recvline);
+    }
+
+    if (n < 0) {
+        err_and_kill("Failed to read from socket");
+    }
+
+    printf("Server closed connection\n");
+    exit(0);
+}
 
 int main(int argc, char** argv) {
     if (argc != 3) {
@@ -6,9 +25,9 @@ int main(int argc, char** argv) {
         return 1;
     }
 
-    int sockfd, n, send_bytes;
+    int sockfd, send_bytes;
     SA_IN server_addr;
-    char sendline[MAX_LINE_LEN], recvline[MAX_LINE_LEN];
+    char sendline[MAX_LINE_LEN];
 
     if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
         err_and_kill("Failed to create socket");
@@ -26,25 +45,20 @@ int main(int argc, char** argv) {
         err_and_kill("Failed to connect to server");
     }
 
-    char* start_message = "START|sree|";
-
-    strncpy(sendline, start_message, MAX_LINE_LEN);
-    // snprintf(sendline, start_message, MAX_LINE_LEN);
-    send_bytes = strlen(sendline);
-
-    if (write(sockfd, sendline, send_bytes) != send_bytes) {
-        err_and_kill("Failed to write to socket");
+    pthread_t receive_thread;
+    if (pthread_create(&receive_thread, NULL, receive_messages, &sockfd) != 0) {
+        err_and_kill("Failed to create receive thread");
     }
-    memset(recvline, 0, MAX_LINE_LEN);
 
-    
-    do {
-        if ((n = read(sockfd, recvline, MAX_LINE_LEN - 1)) < 0) {
-            err_and_kill("Failed to read from socket");
+    while (1) {
+        printf("Enter message: ");
+        fgets(sendline, MAX_LINE_LEN, stdin);
+        send_bytes = strlen(sendline);
+
+        if (write(sockfd, sendline, send_bytes) != send_bytes) {
+            err_and_kill("Failed to write to socket");
         }
-        printf("%s\n", recvline);
-
-    } while (n > 0);
+    }
 
     return 0;
 }
