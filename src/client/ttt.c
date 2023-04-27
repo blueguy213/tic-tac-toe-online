@@ -5,7 +5,7 @@ void print_board(char* board) {
     printf(" %c | %c | %c \n---+---+---\n %c | %c | %c \n---+---+---\n %c | %c | %c \n", board[0], board[1], board[2], board[3], board[4], board[5], board[6], board[7], board[8]);
 }
 
-void handle_server_message(char *message) {
+void handle_server_message(char *message, int sockfd) {
     char *token = strtok(message, "|");
     while (token != NULL) {
         if (strcmp(token, "WAIT") == 0) {
@@ -15,6 +15,8 @@ void handle_server_message(char *message) {
             char *role = strtok(NULL, "|");
             char *opponent_name = strtok(NULL, "|");
             printf("Game started! You are %s, and your opponent is %s.\n", role, opponent_name);
+            pthread_t game_thread;
+            pthread_create(&game_thread, NULL, game_loop, (void *)&sockfd);
             if (strcmp(role, "X") == 0) {
                 printf("Your turn!\n");
             } else {
@@ -78,8 +80,7 @@ int connect_to_server(const char *ip, int port) {
     return sockfd;
 }
 
-void* listener(void *arg) {
-    int sockfd = *((int *)arg);
+void* listener(int sockfd) {
     int n;
     char recvline[MAX_LINE_LEN];
 
@@ -91,7 +92,7 @@ void* listener(void *arg) {
         }
 
         recvline[n] = '\0';
-        handle_server_message(recvline);
+        handle_server_message(recvline, sockfd);
 
         sleep(1);
     }
@@ -100,33 +101,9 @@ void* listener(void *arg) {
     exit(0);
 }
 
-void* game_loop() {
-    while (1) {
-        printf("Enter message: ");
-        fflush(stdout);
-        sleep(1);
-    }
-}
-
-
-int main(int argc, char **argv) {
-    if (argc != 3) {
-        err_and_kill("Usage: ttt <IP address> <port number>");
-    }
-
-    int sockfd = connect_to_server(argv[1], atoi(argv[2]));
-
-    pthread_t listener_thread;
-    pthread_create(&listener_thread, NULL, listener, (void *)&sockfd);
-
-    char name[MAX_NAME_LEN];
-    printf("Enter your name: ");
-    fgets(name, MAX_NAME_LEN, stdin);
-    name[strcspn(name, "\n")] = '\0';
+void* game_loop(int sockfd) {
 
     char message[MAX_LINE_LEN];
-    snprintf(message, MAX_LINE_LEN, "PLAY|%zd|%s|", strlen(name), name);
-    write(sockfd, message, strlen(message));
 
     while (1) {
         char input[10];
@@ -143,8 +120,30 @@ int main(int argc, char **argv) {
         }
         write(sockfd, message, strlen(message));
     }
+}
 
-    pthread_join(listener_thread, NULL);
+int main(int argc, char **argv) {
+    if (argc != 3) {
+        err_and_kill("Usage: ttt <IP address> <port number>");
+    }
+
+    int sockfd = connect_to_server(argv[1], atoi(argv[2]));
+
+    pthread_t game_thread;
+    pthread_create(&game_thread, NULL, game_loop, (void *)&sockfd);
+
+    listener(sockfd);
+
+    char name[MAX_NAME_LEN];
+    printf("Enter your name: ");
+    fgets(name, MAX_NAME_LEN, stdin);
+    name[strcspn(name, "\n")] = '\0';
+
+    char message[MAX_LINE_LEN];
+    snprintf(message, MAX_LINE_LEN, "PLAY|%zd|%s|", strlen(name), name);
+    write(sockfd, message, strlen(message));
+
+    pthread_join(game_thread, NULL);
     return 0;
 }
 
