@@ -20,5 +20,6 @@
     player_t* new_player(char role, char *name, SA_IN address, int socket, pthread_t tid);
     void free_player(player_t* player);
     int is_player(player_t* player, char *name, SA_IN address);
+    void print_player(player_t player);
 
 #endif // _PLAYER_H_
