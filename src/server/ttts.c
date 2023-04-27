@@ -184,13 +184,19 @@ void handleGame(game_t* game) {
         printf("Message from %s: %s\n", active_player->name, buffer);
 
         char** game_output = gamemaster(game, buffer, active_player);
+        char* output1 = strdup(game_output[0]);
+        char* output2 = strdup(game_output[1]);
 
-        if (game_output[0] != NULL) {
-            send_to_socket(active_socket, game_output[0]);
+        printf("<[%s]>", output1);
+        printf("<[%s]>", output2);
+
+        if (output1 != NULL) {
+            printf("Sending to socket");
+            send_to_socket(active_socket, output1);
             //free(game_output[0]);
         }
-        if (game_output[1] != NULL) {
-            send_to_socket(opponent_socket, game_output[1]);
+        if (output2 != NULL) {
+            send_to_socket(opponent_socket, output2);
             //free(game_output[1]);
         }
 
