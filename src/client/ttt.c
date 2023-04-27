@@ -135,15 +135,12 @@ int main(int argc, char **argv) {
         err_and_kill("Usage: ttt <IP address> <port number>");
     }
 
-    int sockfd = connect_to_server(argv[1], atoi(argv[2]));
-
-    // pthread_t game_thread;
-    // pthread_create(&game_thread, NULL, game_loop, (void *)&sockfd);
-
     char name[MAX_NAME_LEN];
     printf("Enter your name: ");
     fgets(name, MAX_NAME_LEN, stdin);
     name[strcspn(name, "\n")] = '\0';
+
+    int sockfd = connect_to_server(argv[1], atoi(argv[2]));
 
     char message[MAX_LINE_LEN];
     snprintf(message, MAX_LINE_LEN, "PLAY|%zd|%s|", strlen(name), name);
