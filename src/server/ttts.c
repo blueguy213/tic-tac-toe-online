@@ -103,8 +103,6 @@ void *client_handler(void *arg) {
     // call handleTwoClients() function here
     printf("Two clients found, making a tictac toe game\n");
 
-
-
     handleTwoClients(players[0], players[1]);
 
     // close sockets
