@@ -120,6 +120,10 @@ void print_board_as_display(game_t* game) {
     printf(" %c | %c | %c \n---+---+---\n %c | %c | %c \n---+---+---\n %c | %c | %c \n", game->board[0], game->board[1], game->board[2], game->board[3], game->board[4], game->board[5], game->board[6], game->board[7], game->board[8]);
 }
 
+void board_to_string(game_t* game, char* buffer) {
+    snprintf(buffer, 100, " %c | %c | %c \n---+---+---\n %c | %c | %c \n---+---+---\n %c | %c | %c \n", game->board[0], game->board[1], game->board[2], game->board[3], game->board[4], game->board[5], game->board[6], game->board[7], game->board[8]);
+}
+
 char** gamemaster(game_t* game, char* input, player_t* sender) {
     char** output = malloc(2 * sizeof(char*));
 
@@ -166,10 +170,17 @@ char** gamemaster(game_t* game, char* input, player_t* sender) {
                     output[1] = "OVER|5|D|Draw!";
                 }
             } else {
-                char buffer[32];
-                sprintf(buffer, "MOVD|16|%c|%d,%d|%.9s|", sender->role, x, y, game->board);
-                output[0] = (char*) strdup(buffer);
-                output[1] = (char*) strdup(buffer);
+                char* board_string = (char*) malloc(100 * sizeof(char));
+                board_to_string(game, board_string);
+                printf("board\n%s\n^\n", board_string);
+
+                output[0] = (char*) malloc(100 * sizeof(char));
+                output[1] = (char*) malloc(100 * sizeof(char));
+
+                strcpy(output[0], board_string);
+                strcpy(output[1], board_string);
+                printf("sent board\n%s\n^\n", output[0]);
+                free(board_string);
             }
         } else {
             output[0] = "INVL|24|That space is occupied.|";
@@ -214,5 +225,8 @@ char** gamemaster(game_t* game, char* input, player_t* sender) {
     output[0] = "INVL|23|!Unrecognized command.|";
     output[1] = NULL;
 }
+
+printf("Output to Player 1: \n%s\nOutput to Player 2: \n%s\n", output[0], output[1]);
+
 return output;
 }
