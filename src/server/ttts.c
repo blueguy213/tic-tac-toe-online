@@ -124,9 +124,9 @@ void handleTwoClients(player_t player1, player_t player2) {
 
     game_t* game;
 
-    char begin_message[250];
-    snprintf(begin_message, sizeof(begin_message), "BEGN|%c|%s|", player1.role, player1.name);
-    send_to_socket(player1.socket, begin_message);
+    // char begin_message[250];
+    // snprintf(begin_message, sizeof(begin_message), "BEGN|%c|%s|", player1.role, player1.name);
+    // send_to_socket(player1.socket, begin_message);
 
     while (running) {
         FD_ZERO(&readfds); // Clear the file descriptor set
