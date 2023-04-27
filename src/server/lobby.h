@@ -12,6 +12,7 @@
         int max_games;
         game_t* games[5];
         player_t* players[10];
+        player_t* waiting_player;
         pthread_mutex_t lock;
     } lobby_t;
 

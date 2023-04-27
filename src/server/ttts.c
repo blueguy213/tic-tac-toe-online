@@ -16,6 +16,8 @@ int main(int argc, char** argv) {
     int port, server_socket, client_socket, addr_size;
     int  client_count = 0;
 
+    lobby_t* lobby = new_lobby(10);
+
     port = atoi(argv[1]);
     server_socket = check(socket(AF_INET, SOCK_STREAM, 0), "Failed to create socket");
 
@@ -77,8 +79,11 @@ int main(int argc, char** argv) {
             previous_player = malloc(sizeof(player_t)); // Allocate memory for the previous player
             *previous_player = *newplayer;
         }
-
     }
+    // Free everything
+    free_lobby(lobby);
+    close(server_socket);
+    return 0;
 }
 
 int check(int exp, const char* msg) {

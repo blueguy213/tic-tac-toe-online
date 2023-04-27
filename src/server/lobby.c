@@ -7,6 +7,7 @@ lobby_t* new_lobby(int max_players) {
     lobby->num_players = 0;
     lobby->max_games = max_players / 2;
     lobby->num_games = 0;
+    lobby->waiting_player = NULL;
     lobby->lock = (pthread_mutex_t) PTHREAD_MUTEX_INITIALIZER;
     return lobby;
 }
@@ -44,7 +45,9 @@ int is_player_in_lobby(lobby_t* lobby, char* name, SA_IN address) {
 /**
  * Add a player to the lobby and return the index of the player (or some error code)
  * -1 = lobby is full
- * -2 = player already in lobby
+ * -2 = A player with the same name and address is already in the lobby
+ * -3 = There is no waiting player
+ * 0 <= i <= max_games = There is a waiting player and the index of the game that the players are in
  * */ 
 int add_player(lobby_t* lobby, player_t* player) {
     // Lock the lobby mutex
@@ -61,13 +64,22 @@ int add_player(lobby_t* lobby, player_t* player) {
             return -2;
         }
     }
-
-    // Add the player to the lobby
-    int player_index = lobby->num_players;
-    lobby->players[lobby->num_players] = player;
-    lobby->num_players++;
+    // Check if there is a waiting player
+    if (lobby->waiting_player == NULL) {
+        lobby->waiting_player = player;
+        pthread_mutex_unlock(&lobby->lock);
+        return -3;
+    }
+    // Create a new game
+    game_t* game = new_game(lobby->waiting_player, player);
+    // Add the game to the lobby
+    lobby->games[lobby->num_games] = game;
+    lobby->num_games++;
+    // Remove the waiting player
+    lobby->waiting_player = NULL;
+    // Unlock the lobby mutex
     pthread_mutex_unlock(&lobby->lock);
-    return player_index;
+    return lobby->num_games - 1;
 }
 
 /**
@@ -75,6 +87,7 @@ int add_player(lobby_t* lobby, player_t* player) {
  * -1 = lobby is empty
  * -2 = player not in lobby
  * -3 = player in game
+ * 0 <= i <= max_players = index of the player that was removed from the lobby
  * */ 
 int remove_player(lobby_t* lobby, char* name, SA_IN address) {
     // Lock the lobby mutex
@@ -112,6 +125,7 @@ int remove_player(lobby_t* lobby, char* name, SA_IN address) {
  * -1 = lobby is full
  * -2 = game already in lobby
  * -3 = player not in lobby
+ *  0 <= i <= max_games = index of the game that was added to the lobby
  * */ 
 int add_game(lobby_t* lobby, game_t* game, player_t* x, player_t* o) {
     // Lock the lobby mutex
