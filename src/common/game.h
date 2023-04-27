@@ -18,7 +18,7 @@
 
     typedef struct {
         char* board; // The game board as a 9 character string (3 rows of 3 characters)
-
+        pthread_t tid;
         State state;
         pthread_mutex_t lock; // Mutex lock for the game state since it is shared between both players' threads
         player_t* playerX; // Pointer to the player with the X role
