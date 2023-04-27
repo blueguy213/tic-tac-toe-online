@@ -57,7 +57,7 @@ int main(int argc, char** argv) {
 
         // Create a new player
         player_t *newplayer = malloc(sizeof(player_t));
-        *newplayer = *new_player('X', player_name, client_addr, client_socket, tid); // 'X' will be replaced with the proper role later
+        newplayer = new_player('X', player_name, client_addr, client_socket, tid); // 'X' will be replaced with the proper role later
 
         print_player(*newplayer);
 
@@ -191,7 +191,7 @@ void handleTwoClients(player_t player1, player_t player2) {
 
         free(game_output);
 
-        print_lobby();
+        // print_lobby(lobby);
     }
 
     // Clean up the game
