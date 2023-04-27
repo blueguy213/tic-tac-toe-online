@@ -20,7 +20,7 @@ server: obj/ttts.o obj/lobby.o obj/game.o obj/player.o obj/utils.o
 	$(CC) $(CFLAGS) -o bin/ttts $^ -lpthread
 
 client: obj/ttt.o obj/game.o obj/player.o obj/utils.o
-	$(CC) $(CFLAGS) -o bin/ttt $^
+	$(CC) $(CFLAGS) -o bin/ttt $^ -lpthread
 
 clean:
 	rm -rf obj bin

@@ -19,6 +19,8 @@
     #include <netdb.h>
     #include <pthread.h>
     #include <stdbool.h>
+    #include <regex.h>
+
     #include "game.h"
     #include "player.h"
 

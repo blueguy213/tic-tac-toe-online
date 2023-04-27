@@ -1,4 +1,4 @@
-#include <pthread.h>
+#include "ttt.h"
 #include "../common/utils.h"
 
 void print_board(char* board) {
@@ -17,6 +17,7 @@ void handle_server_message(char *message, int sockfd) {
             printf("Game started! You are %s, and your opponent is %s.\n", role, opponent_name);
             pthread_t game_thread;
             pthread_create(&game_thread, NULL, game_loop, (void *)&sockfd);
+            pthread_detach(game_thread);
             if (strcmp(role, "X") == 0) {
                 printf("Your turn!\n");
             } else {
@@ -104,6 +105,8 @@ void* listener(int sockfd) {
 void* game_loop(int sockfd) {
 
     char message[MAX_LINE_LEN];
+    regex_t move_regex;
+    regcomp(&move_regex, "^[1-3],[1-3]$", NULL);
 
     while (1) {
         char input[10];
@@ -115,11 +118,16 @@ void* game_loop(int sockfd) {
             snprintf(message, MAX_LINE_LEN, "RSGN|0|");
         } else if (strcmp(input, "draw") == 0) {
             snprintf(message, MAX_LINE_LEN, "DRAW|1|S|");
-        } else {
+        } else if (regexec(&move_regex, input, 0, NULL, 0) == 0) {
             snprintf(message, MAX_LINE_LEN, "MOVE|5|%s|", input);
+        } else {
+            printf("Invalid input. Please try again.\n");
         }
         write(sockfd, message, strlen(message));
     }
+
+    printf("Server closed connection\n");
+    exit(0);
 }
 
 int main(int argc, char **argv) {
@@ -129,10 +137,8 @@ int main(int argc, char **argv) {
 
     int sockfd = connect_to_server(argv[1], atoi(argv[2]));
 
-    pthread_t game_thread;
-    pthread_create(&game_thread, NULL, game_loop, (void *)&sockfd);
-
-    listener(sockfd);
+    // pthread_t game_thread;
+    // pthread_create(&game_thread, NULL, game_loop, (void *)&sockfd);
 
     char name[MAX_NAME_LEN];
     printf("Enter your name: ");
@@ -143,7 +149,8 @@ int main(int argc, char **argv) {
     snprintf(message, MAX_LINE_LEN, "PLAY|%zd|%s|", strlen(name), name);
     write(sockfd, message, strlen(message));
 
-    pthread_join(game_thread, NULL);
+    listener(sockfd);
+
     return 0;
 }
 
