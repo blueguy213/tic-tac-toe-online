@@ -1,7 +1,7 @@
 #include "lobby.h"
 
 // Create a new lobby
-lobby_t* new_lobby(char *name, char *password, int max_players) {
+lobby_t* new_lobby(int max_players) {
     lobby_t* lobby = malloc(sizeof(lobby_t));
     lobby->max_players = max_players;
     lobby->num_players = 0;

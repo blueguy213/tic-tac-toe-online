@@ -16,6 +16,7 @@
     } lobby_t;
 
     // Function prototypes
+    lobby_t* new_lobby(int max_players);
     void free_lobby(lobby_t* lobby); // Free the memory allocated for a lobby and all of its games and players
     int is_lobby_full(lobby_t* lobby); // Check if the lobby is full (returns 1 if full, 0 if not)
     int add_player(lobby_t* lobby, player_t* player); // Add a player to the lobby and return the index of the player (or some error code)
