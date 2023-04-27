@@ -73,7 +73,9 @@ int main(int argc, char** argv) {
 
             pthread_create(&tid[client_count / 2 - 1], NULL, client_handler, (void *)arg);
         } else {
-            previous_player = newplayer; // Store the new player to be passed in the next iteration
+            newplayer->role = 'O';
+            previous_player = malloc(sizeof(player_t)); // Allocate memory for the previous player
+            *previous_player = *newplayer;
         }
 
     }
@@ -89,7 +91,7 @@ int check(int exp, const char* msg) {
 void handleTwoClients(player_t player1, player_t player2);
 
 void *client_handler(void *arg) {
-    player_t players[2];
+    player_t *players = malloc(sizeof(player_t) * 2); // Allocate memory for the players array
 
     players[0] = *((player_t**)arg)[0];
     players[1] = *((player_t**)arg)[1];
@@ -108,6 +110,8 @@ void *client_handler(void *arg) {
     // close sockets
     close(players[0].socket);
     close(players[1].socket);
+
+    free(players);
     
     return NULL;
 }
@@ -121,6 +125,10 @@ void handleTwoClients(player_t player1, player_t player2) {
     int socket2 = player2.socket;
 
     game_t* game;
+
+    char begin_message[250];
+    snprintf(begin_message, sizeof(begin_message), "BEGN|%c|%s|", player1.role, player1.name);
+    send_to_socket(player1.socket, begin_message);
 
     while (running) {
         FD_ZERO(&readfds); // Clear the file descriptor set
