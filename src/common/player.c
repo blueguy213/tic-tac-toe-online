@@ -6,7 +6,8 @@ player_t* new_player(char role, char *name, SA_IN address, int socket, pthread_t
     player->socket = socket;
     player->role = role;
     player->tid = tid;
-    player->name = name;
+    player->name = malloc(strlen(name) + 1);
+    strcpy(player->name, name);
     return player;
 }
 

@@ -23,6 +23,6 @@
     int remove_player(lobby_t* lobby, char* name, SA_IN address); // Remove a player from the lobby and return the index of the player (or some error code)
     int add_game(lobby_t* lobby, game_t* game, player_t* x, player_t* o); // Add a game to the lobby and return the index of the game (or some error code)
     int remove_game(lobby_t* lobby, game_t* game); // Remove a game from the lobby and return the index of the game (or some error code)
-    void print_lobby(); // Print the lobby to stdout
+    void print_lobby(lobby_t* lobby); // Print the lobby to stdout
 
 #endif // _LOBBY_H_

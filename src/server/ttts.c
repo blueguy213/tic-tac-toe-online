@@ -115,29 +115,32 @@ void *client_handler(void *arg) {
 }
 
 void handleTwoClients(player_t player1, player_t player2) {
-    fd_set readfds; // File descriptor set for select()
+    fd_set readfds; 
     char buffer[BUFFER_SIZE];
-    char reply_buffer[BUFFER_SIZE]; // Add this line to create a buffer for the reply string
+    char reply_buffer[BUFFER_SIZE];
+
+    // Initialize the game and assign roles to the players
+    player1.role = 'X';
+    player2.role = 'O';
+    game_t* game = new_game(&player1, &player2);
+
     bool running = true;
     int socket1 = player1.socket;
     int socket2 = player2.socket;
 
-    game_t* game;
-
-    // char begin_message[250];
-    // snprintf(begin_message, sizeof(begin_message), "BEGN|%c|%s|", player1.role, player1.name);
-    // send_to_socket(player1.socket, begin_message);
+    // Send the BEGN response to both players
+    sprintf(reply_buffer, "BEGN|%c|%s|", player1.role, player2.name);
+    send_to_socket(socket1, reply_buffer);
+    sprintf(reply_buffer, "BEGN|%c|%s|", player2.role, player1.name);
+    send_to_socket(socket2, reply_buffer);
 
     while (running) {
-        FD_ZERO(&readfds); // Clear the file descriptor set
-        FD_SET(socket1, &readfds); // Add socket1 to the set
-        FD_SET(socket2, &readfds); // Add socket2 to the set
+        FD_ZERO(&readfds); 
+        FD_SET(socket1, &readfds); 
+        FD_SET(socket2, &readfds); 
 
         int max_fd = socket1 > socket2 ? socket1 : socket2;
 
-        printf("socket1: %d, socket2: %d\n", socket1, socket2);
-
-        // Wait for either socket to become ready for reading
         int activity = select(max_fd + 1, &readfds, NULL, NULL, NULL);
 
         if (activity < 0) {
@@ -145,35 +148,49 @@ void handleTwoClients(player_t player1, player_t player2) {
             break;
         }
 
-        // Check if socket1 is ready for reading
+        player_t* active_player;
+        int active_socket;
+        int opponent_socket;
+
         if (FD_ISSET(socket1, &readfds)) {
-            ssize_t bytes_received = recv(socket1, buffer, BUFFER_SIZE - 1, 0);
-            if (bytes_received > 0) {
-                buffer[bytes_received] = '\0';
-                printf("Message from socket1: [%s]\n", buffer);
-
-                // char** output = gamemaster(game, buffer, NULL);
-
-                sprintf(reply_buffer, "%s", buffer); // Use the reply_buffer here
-                send_to_socket(socket2, reply_buffer); // Pass the reply_buffer instead of sprintf's return value
+            active_player = &player1;
+            active_socket = socket1;
+            opponent_socket = socket2;
+        } else if (FD_ISSET(socket2, &readfds)) {
+            active_player = &player2;
+            active_socket = socket2;
+            opponent_socket = socket1;
         } else {
-                running = false;
-            }
+            continue;
         }
 
-        // Check if socket2 is ready for reading
-        if (FD_ISSET(socket2, &readfds)) {
-            ssize_t bytes_received = recv(socket2, buffer, BUFFER_SIZE - 1, 0);
-            if (bytes_received > 0) {
-                buffer[bytes_received] = '\0';
-                printf("Message from socket2: %s\n", buffer);
-                sprintf(reply_buffer, "%s", buffer); // Use the reply_buffer here
-                send_to_socket(socket1, reply_buffer); // Pass the reply_buffer instead of sprintf's return value
-        } else {
-                running = false;
-            }
+        ssize_t bytes_received = recv(active_socket, buffer, BUFFER_SIZE - 1, 0);
+        if (bytes_received <= 0) {
+            running = false;
+            continue;
         }
+        
+        buffer[bytes_received] = '\0';
+        printf("Message from %s: %s\n", active_player->name, buffer);
+
+        char** game_output = gamemaster(game, buffer, active_player);
+
+        if (game_output[0] != NULL) {
+            send_to_socket(active_socket, game_output[0]);
+            free(game_output[0]);
+        }
+        if (game_output[1] != NULL) {
+            send_to_socket(opponent_socket, game_output[1]);
+            free(game_output[1]);
+        }
+
+        free(game_output);
+
+        print_lobby();
     }
+
+    // Clean up the game
+    free_game(game);
 }
 
 int send_to_socket(int socket, const char *str) {
@@ -184,3 +201,66 @@ int send_to_socket(int socket, const char *str) {
     }
     return 0;
 }
+
+
+// void handleTwoClients(player_t player1, player_t player2) {
+//     fd_set readfds; // File descriptor set for select()
+//     char buffer[BUFFER_SIZE];
+//     char reply_buffer[BUFFER_SIZE]; // Add this line to create a buffer for the reply string
+//     bool running = true;
+//     int socket1 = player1.socket;
+//     int socket2 = player2.socket;
+
+//     game_t* game;
+
+//     // char begin_message[250];
+//     // snprintf(begin_message, sizeof(begin_message), "BEGN|%c|%s|", player1.role, player1.name);
+//     // send_to_socket(player1.socket, begin_message);
+
+//     while (running) {
+//         FD_ZERO(&readfds); // Clear the file descriptor set
+//         FD_SET(socket1, &readfds); // Add socket1 to the set
+//         FD_SET(socket2, &readfds); // Add socket2 to the set
+
+//         int max_fd = socket1 > socket2 ? socket1 : socket2;
+
+//         printf("socket1: %d, socket2: %d\n", socket1, socket2);
+
+//         // Wait for either socket to become ready for reading
+//         int activity = select(max_fd + 1, &readfds, NULL, NULL, NULL);
+
+//         if (activity < 0) {
+//             err_and_kill("select failed");
+//             break;
+//         }
+
+//         // Check if socket1 is ready for reading
+//         if (FD_ISSET(socket1, &readfds)) {
+//             ssize_t bytes_received = recv(socket1, buffer, BUFFER_SIZE - 1, 0);
+//             if (bytes_received > 0) {
+//                 buffer[bytes_received] = '\0';
+//                 printf("Message from socket1: [%s]\n", buffer);
+
+//                 // char** output = gamemaster(game, buffer, NULL);
+
+//                 sprintf(reply_buffer, "%s", buffer); // Use the reply_buffer here
+//                 send_to_socket(socket2, reply_buffer); // Pass the reply_buffer instead of sprintf's return value
+//         } else {
+//                 running = false;
+//             }
+//         }
+
+//         // Check if socket2 is ready for reading
+//         if (FD_ISSET(socket2, &readfds)) {
+//             ssize_t bytes_received = recv(socket2, buffer, BUFFER_SIZE - 1, 0);
+//             if (bytes_received > 0) {
+//                 buffer[bytes_received] = '\0';
+//                 printf("Message from socket2: %s\n", buffer);
+//                 sprintf(reply_buffer, "%s", buffer); // Use the reply_buffer here
+//                 send_to_socket(socket1, reply_buffer); // Pass the reply_buffer instead of sprintf's return value
+//         } else {
+//                 running = false;
+//             }
+//         }
+//     }
+// }
