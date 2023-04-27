@@ -73,20 +73,6 @@ int main(int argc, char** argv) {
             // pthread_create(&tid[client_count / 2 - 1], NULL, client_handler, lobby->games[game_index]);
         }
 
-        // if (client_count % 2 == 0) {
-        //     // player_t **arg = malloc(sizeof(player_t*) * 2);
-        //     newplayer->role = 'O';
-        //     previous_player->role = 'X';
-        //     game_t* game = new_game(newplayer, previous_player);
-        //     // arg[0] = newplayer; // Pass the new player created for client_socket
-        //     // arg[1] = previous_player; // Pass the new player created for client_socket-1
-
-        //     pthread_create(&tid[client_count / 2 - 1], NULL, client_handler, game);
-        // } else {
-        //     newplayer->role = 'O';
-        //     previous_player = malloc(sizeof(player_t)); // Allocate memory for the previous player
-        //     *previous_player = *newplayer;
-        // }
         print_lobby(lobby);
     }
     // Free everything
@@ -147,11 +133,6 @@ void handleGame(game_t* game) {
     fd_set readfds;
     char buffer[BUFFER_SIZE];
     char reply_buffer[BUFFER_SIZE];
-
-    // // Initialize the game and assign roles to the players
-    // player1.role = 'X';
-    // player2.role = 'O';
-    // game_t* game = new_game(&player1, &player2);
 
     bool running = true;
     int socket1 = game->playerX->socket;
@@ -225,66 +206,3 @@ int send_to_socket(int socket, const char *str) {
     }
     return 0;
 }
-
-
-// void handleTwoClients(player_t player1, player_t player2) {
-//     fd_set readfds; // File descriptor set for select()
-//     char buffer[BUFFER_SIZE];
-//     char reply_buffer[BUFFER_SIZE]; // Add this line to create a buffer for the reply string
-//     bool running = true;
-//     int socket1 = player1.socket;
-//     int socket2 = player2.socket;
-
-//     game_t* game;
-
-//     // char begin_message[250];
-//     // snprintf(begin_message, sizeof(begin_message), "BEGN|%c|%s|", player1.role, player1.name);
-//     // send_to_socket(player1.socket, begin_message);
-
-//     while (running) {
-//         FD_ZERO(&readfds); // Clear the file descriptor set
-//         FD_SET(socket1, &readfds); // Add socket1 to the set
-//         FD_SET(socket2, &readfds); // Add socket2 to the set
-
-//         int max_fd = socket1 > socket2 ? socket1 : socket2;
-
-//         printf("socket1: %d, socket2: %d\n", socket1, socket2);
-
-//         // Wait for either socket to become ready for reading
-//         int activity = select(max_fd + 1, &readfds, NULL, NULL, NULL);
-
-//         if (activity < 0) {
-//             err_and_kill("select failed");
-//             break;
-//         }
-
-//         // Check if socket1 is ready for reading
-//         if (FD_ISSET(socket1, &readfds)) {
-//             ssize_t bytes_received = recv(socket1, buffer, BUFFER_SIZE - 1, 0);
-//             if (bytes_received > 0) {
-//                 buffer[bytes_received] = '\0';
-//                 printf("Message from socket1: [%s]\n", buffer);
-
-//                 // char** output = gamemaster(game, buffer, NULL);
-
-//                 sprintf(reply_buffer, "%s", buffer); // Use the reply_buffer here
-//                 send_to_socket(socket2, reply_buffer); // Pass the reply_buffer instead of sprintf's return value
-//         } else {
-//                 running = false;
-//             }
-//         }
-
-//         // Check if socket2 is ready for reading
-//         if (FD_ISSET(socket2, &readfds)) {
-//             ssize_t bytes_received = recv(socket2, buffer, BUFFER_SIZE - 1, 0);
-//             if (bytes_received > 0) {
-//                 buffer[bytes_received] = '\0';
-//                 printf("Message from socket2: %s\n", buffer);
-//                 sprintf(reply_buffer, "%s", buffer); // Use the reply_buffer here
-//                 send_to_socket(socket1, reply_buffer); // Pass the reply_buffer instead of sprintf's return value
-//         } else {
-//                 running = false;
-//             }
-//         }
-//     }
-// }
