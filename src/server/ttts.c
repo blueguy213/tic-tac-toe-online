@@ -45,12 +45,19 @@ int main(int argc, char** argv) {
         char play_command[256];
         read(client_socket, play_command, sizeof(play_command));
 
+        printf("%s\n", play_command);
+
         // Parse the player's name
         char player_name[256];
-        sscanf(play_command, "PLAY|%[^|]|", player_name);
+        int play_number;
+
+        sscanf(play_command, "PLAY|%d|%[^|]|", &play_number, player_name);
 
         // Create a new player
-        player_t *newplayer = new_player('X', player_name, client_addr, client_socket, tid); // 'X' will be replaced with the proper role later
+        player_t *newplayer = malloc(sizeof(player_t));
+        *newplayer = *new_player('X', player_name, client_addr, client_socket, tid); // 'X' will be replaced with the proper role later
+
+        print_player(*newplayer);
 
         // Send the WAIT response to the client
         char wait_response[] = "WAIT";
@@ -61,12 +68,12 @@ int main(int argc, char** argv) {
         if (client_count % 2 == 0) {
             player_t **arg = malloc(sizeof(player_t*) * 2);
 
-            arg[0] = new_player; // Pass the new player created for client_socket
+            arg[0] = newplayer; // Pass the new player created for client_socket
             arg[1] = previous_player; // Pass the new player created for client_socket-1
 
             pthread_create(&tid[client_count / 2 - 1], NULL, client_handler, (void *)arg);
         } else {
-            previous_player = new_player; // Store the new player to be passed in the next iteration
+            previous_player = newplayer; // Store the new player to be passed in the next iteration
         }
 
     }
@@ -94,6 +101,8 @@ void *client_handler(void *arg) {
     // call handleTwoClients() function here
     printf("Two clients found, making a tictac toe game\n");
 
+
+
     handleTwoClients(players[0], players[1]);
 
     // close sockets
@@ -120,11 +129,13 @@ void handleTwoClients(player_t player1, player_t player2) {
 
         int max_fd = socket1 > socket2 ? socket1 : socket2;
 
+        printf("socket1: %d, socket2: %d\n", socket1, socket2);
+
         // Wait for either socket to become ready for reading
         int activity = select(max_fd + 1, &readfds, NULL, NULL, NULL);
 
         if (activity < 0) {
-            perror("select failed");
+            err_and_kill("select failed");
             break;
         }
 
