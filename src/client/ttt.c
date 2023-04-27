@@ -103,11 +103,13 @@ void* listener(int sockfd, char* board) {
     exit(0);
 }
 
-void* game_loop(int sockfd) {
+void* game_loop(void* args) {
+
+    int sockfd = *((int *) args);
 
     char message[MAX_LINE_LEN];
     regex_t move_regex;
-    regcomp(&move_regex, "^[1-3],[1-3]$", NULL);
+    regcomp(&move_regex, "^[1-3],[1-3]$", 0);
 
     while (1) {
         char input[10];

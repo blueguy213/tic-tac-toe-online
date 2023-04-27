@@ -13,7 +13,7 @@ int main(int argc, char** argv) {
 
     pthread_t tid[MAX_CLIENTS];
 
-    int port, server_socket, client_socket, addr_size;
+    int port, server_socket, client_socket, addr_size, game_index;
     int  client_count = 0;
 
     lobby_t* lobby = new_lobby(10);
@@ -26,7 +26,7 @@ int main(int argc, char** argv) {
     server_addr.sin_family = AF_INET;
     server_addr.sin_addr.s_addr = htonl(INADDR_ANY);
     server_addr.sin_port = htons(port);
-    player_t* previous_player;
+    // player_t* previous_player;
     
     check(bind(server_socket, (SA*)&server_addr, sizeof(server_addr)), "Failed to bind");
     check(listen(server_socket, SERVER_BACKLOG), "Failed to listen");
@@ -57,28 +57,37 @@ int main(int argc, char** argv) {
 
         // Create a new player
         player_t *newplayer = malloc(sizeof(player_t));
-        newplayer = new_player('X', player_name, client_addr, client_socket, tid); // 'X' will be replaced with the proper role later
-
+        newplayer = new_player('X', player_name, client_addr, client_socket); // 'X' will be replaced with the proper role later
         print_player(*newplayer);
-
         // Send the WAIT response to the client
         char wait_response[] = "WAIT";
         write(client_socket, wait_response, strlen(wait_response));
 
         client_count = client_count + 1;
 
-        if (client_count % 2 == 0) {
-            player_t **arg = malloc(sizeof(player_t*) * 2);
-
-            arg[0] = newplayer; // Pass the new player created for client_socket
-            arg[1] = previous_player; // Pass the new player created for client_socket-1
-
-            pthread_create(&tid[client_count / 2 - 1], NULL, client_handler, (void *)arg);
-        } else {
-            newplayer->role = 'O';
-            previous_player = malloc(sizeof(player_t)); // Allocate memory for the previous player
-            *previous_player = *newplayer;
+        if ((game_index = add_player(lobby, newplayer)) >= 0) {
+            game_thread_args_t *args = malloc(sizeof(game_thread_args_t));
+            args->lobby = lobby;
+            args->game_index = game_index;
+            pthread_create(&tid, NULL, client_handler, (void *)args);
+            // pthread_create(&tid[client_count / 2 - 1], NULL, client_handler, lobby->games[game_index]);
         }
+
+        // if (client_count % 2 == 0) {
+        //     // player_t **arg = malloc(sizeof(player_t*) * 2);
+        //     newplayer->role = 'O';
+        //     previous_player->role = 'X';
+        //     game_t* game = new_game(newplayer, previous_player);
+        //     // arg[0] = newplayer; // Pass the new player created for client_socket
+        //     // arg[1] = previous_player; // Pass the new player created for client_socket-1
+
+        //     pthread_create(&tid[client_count / 2 - 1], NULL, client_handler, game);
+        // } else {
+        //     newplayer->role = 'O';
+        //     previous_player = malloc(sizeof(player_t)); // Allocate memory for the previous player
+        //     *previous_player = *newplayer;
+        // }
+        print_lobby(lobby);
     }
     // Free everything
     free_lobby(lobby);
@@ -93,50 +102,65 @@ int check(int exp, const char* msg) {
     return exp;
 }
 
-void handleTwoClients(player_t player1, player_t player2);
+void handleGame(game_t* game);
 
-void *client_handler(void *arg) {
-    player_t *players = malloc(sizeof(player_t) * 2); // Allocate memory for the players array
+void *client_handler(void* args) {
 
-    players[0] = *((player_t**)arg)[0];
-    players[1] = *((player_t**)arg)[1];
+    game_thread_args_t *game_args = (game_thread_args_t *) args;
 
-    free(arg);
+    lobby_t *lobby = game_args->lobby;
+    int game_index = game_args->game_index;
+
+    game_t *game = lobby->games[game_index];
     
     // handle clients
     printf("Handling two clients\n");
     // call handleTwoClients() function here
     printf("Two clients found, making a tictac toe game\n");
 
-    handleTwoClients(players[0], players[1]);
+    handleGame(game);
 
     // close sockets
-    close(players[0].socket);
-    close(players[1].socket);
+    close(game->playerX->socket);
+    close(game->playerO->socket);
 
-    free(players);
+    pthread_mutex_lock(&lobby->lock);
     
-    return NULL;
+    free_game(lobby->games[game_index]);
+    // Remove the game from the lobby
+    remove_game(lobby, game);
+
+    // Remove the players from the lobby
+    remove_player(lobby, game->playerX->name, game->playerX->address);
+    remove_player(lobby, game->playerO->name, game->playerO->address);
+    
+    pthread_mutex_unlock(&lobby->lock);
+
+    // free memory
+    free_game(game);
+
+    pthread_exit(NULL);
 }
 
-void handleTwoClients(player_t player1, player_t player2) {
-    fd_set readfds; 
+void handleGame(game_t* game) {
+
+    fd_set readfds;
     char buffer[BUFFER_SIZE];
     char reply_buffer[BUFFER_SIZE];
 
-    // Initialize the game and assign roles to the players
-    player1.role = 'X';
-    player2.role = 'O';
-    game_t* game = new_game(&player1, &player2);
+    // // Initialize the game and assign roles to the players
+    // player1.role = 'X';
+    // player2.role = 'O';
+    // game_t* game = new_game(&player1, &player2);
 
     bool running = true;
-    int socket1 = player1.socket;
-    int socket2 = player2.socket;
+    int socket1 = game->playerX->socket;
+    int socket2 = game->playerO->socket;
 
     // Send the BEGN response to both players
-    sprintf(reply_buffer, "BEGN|%c|%s|", player1.role, player2.name);
+    sprintf(reply_buffer, "BEGN|%c|%s|", game->playerX->role, game->playerO->name);
     send_to_socket(socket1, reply_buffer);
-    sprintf(reply_buffer, "BEGN|%c|%s|", player2.role, player1.name);
+    sprintf(reply_buffer, "BEGN|%c|%s|", game->playerO->role, game->playerX->name);
     send_to_socket(socket2, reply_buffer);
 
     while (running) {
@@ -158,11 +182,11 @@ void handleTwoClients(player_t player1, player_t player2) {
         int opponent_socket;
 
         if (FD_ISSET(socket1, &readfds)) {
-            active_player = &player1;
+            active_player = game->playerX;
             active_socket = socket1;
             opponent_socket = socket2;
         } else if (FD_ISSET(socket2, &readfds)) {
-            active_player = &player2;
+            active_player = game->playerO;
             active_socket = socket2;
             opponent_socket = socket1;
         } else {
@@ -182,20 +206,15 @@ void handleTwoClients(player_t player1, player_t player2) {
 
         if (game_output[0] != NULL) {
             send_to_socket(active_socket, game_output[0]);
-            free(game_output[0]);
+            //free(game_output[0]);
         }
         if (game_output[1] != NULL) {
             send_to_socket(opponent_socket, game_output[1]);
-            free(game_output[1]);
+            //free(game_output[1]);
         }
 
         free(game_output);
-
-        // print_lobby(lobby);
     }
-
-    // Clean up the game
-    free_game(game);
 }
 
 int send_to_socket(int socket, const char *str) {

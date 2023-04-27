@@ -64,6 +64,9 @@ int add_player(lobby_t* lobby, player_t* player) {
             return -2;
         }
     }
+    printf("Adding player %s to lobby\n", player->name);
+    lobby->players[lobby->num_players] = player;
+    lobby->num_players++;
     // Check if there is a waiting player
     if (lobby->waiting_player == NULL) {
         lobby->waiting_player = player;
@@ -94,7 +97,7 @@ int remove_player(lobby_t* lobby, char* name, SA_IN address) {
     pthread_mutex_lock(&lobby->lock);
     // Check if the lobby is empty
     if (lobby->num_players == 0) {
-        pthread_mutex_unlock(&lobby->lock);
+        
         return -1;
     }
     // Check if the player is in a game that is in the lobby
@@ -186,15 +189,23 @@ int remove_game(lobby_t* lobby, game_t* game) {
 // Print the lobby to stdout
 void print_lobby(lobby_t* lobby) {
     pthread_mutex_lock(&lobby->lock);
+    printf("Lobby:\n");
     // Print the players with the players formatted as "\tname:name\nSA_IN:address\n"
-    printf("Players:\n");
+    printf("\tPlayers: %d\n", lobby->num_players);
     for (int i = 0; i < lobby->num_players; i++) {
-        printf("\t%s\n", lobby->players[i]->name);
+        printf("\t\t%s\n", lobby->players[i]->name);
     }
 
     // Print the games formatted as "board\nstate:state\nx:name:address\no:name\n"
+    printf("\tGames: %d\n", lobby->num_games);
     for (int i = 0; i < lobby->num_games; i++) {
-        printf("Game %d:\n\tboard: %s\n\tstate: %d\n\tx: %s\n\to: %s\n", i, lobby->games[i]->board, lobby->games[i]->state, lobby->games[i]->playerX->name, lobby->games[i]->playerO->name);
+        printf("\t\tGame %d:\n", i);
+        printf("\t\t\tboard: %s", lobby->games[i]->board);
+        printf("\t\t\tstate: %d\n", lobby->games[i]->state);
+        printf("\t\t\tx: %s", lobby->games[i]->playerX->name);
+        printf("\t\t\to: %s\n", lobby->games[i]->playerO->name);
     }
+    printf("\n");
+    fflush(stdout);
     pthread_mutex_unlock(&lobby->lock);
 }

@@ -7,6 +7,6 @@
     int connect_to_server(const char *ip, int port);
     void* listener(int sockfd, char* board);
     void *receive_messages(void *arg);
-    void* game_loop(int sockfd);
+    void* game_loop(void* args);
     
 #endif // _TTT_H_

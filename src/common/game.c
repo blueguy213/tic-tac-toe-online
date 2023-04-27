@@ -1,11 +1,11 @@
 #include "utils.h"
 
 game_t* new_game(player_t* x, player_t* o) {
+    x->role = 'X';
+    o->role = 'O';
     game_t* game = malloc(sizeof(game_t));
-    game->board = malloc(9 * sizeof(char));
-    for (int i = 0; i < 9; i++) {
-        game->board[i] = '.';
-    }
+    game->board = malloc(10 * sizeof(char));
+    strcpy(game->board, ".........");
     game->playerX = x;
     game->playerO = o;
     game->state = UNSTARTED;
@@ -149,7 +149,7 @@ char** gamemaster(game_t* game, char* input, player_t* sender) {
         }
 
         int x, y;
-        sscanf(input, "MOVE|%*d|%*c|%d,%d", &x, &y);
+        sscanf(input, "MOVE|%*d|%d,%d|", &x, &y);
 
         if (game->board[(x - 1) + (y - 1) * 3] == '.') {
             move(game, sender, x - 1, y - 1);
@@ -198,7 +198,7 @@ char** gamemaster(game_t* game, char* input, player_t* sender) {
     }
 
     char message;
-    sscanf(input, "DRAW|%*d|%c", &message);
+    sscanf(input, "DRAW|%*d|%c|", &message);
     if (message == 'S') {
         draw(game, sender);
         output[0] = "DRAW|2|S|";

@@ -23,6 +23,12 @@
     #define SERVER_BACKLOG 100
     #define SOCKET_ERROR (-1)
 
+    typedef struct game_thread_args {
+        lobby_t *lobby;
+        int game_index;
+    } game_thread_args_t;
+
+
     void* handle_connection(void* p_client_socket);
     void handleTwoClients(player_t player1, player_t player2);
     int check(int exp, const char* msg);
