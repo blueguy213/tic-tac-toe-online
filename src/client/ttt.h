@@ -3,9 +3,9 @@
     #define _TTT_H_
 
     void print_board(char* board);
-    void handle_server_message(char *message, int sockfd);
+    void handle_server_message(char *message, int sockfd, char* board);
     int connect_to_server(const char *ip, int port);
-    void* listener(int sockfd);
+    void* listener(int sockfd, char* board);
     void *receive_messages(void *arg);
     void* game_loop(int sockfd);
     
