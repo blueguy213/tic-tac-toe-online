@@ -18,7 +18,7 @@
 
     typedef struct {
         char* board; // The game board as a 9 character string (3 rows of 3 characters)
-
+        pthread_t tid; // The thread ID of the game thread
         State state;
         pthread_mutex_t lock; // Mutex lock for the game state since it is shared between both players' threads
         player_t* playerX; // Pointer to the player with the X role
@@ -32,6 +32,7 @@
     void resign(game_t* game, player_t* player); // Update the game state to a resignation by the given player
     void print_board_as_display(game_t* game); // Return the game board as a display
     int check_game(game_t* game); // Check if the game is over
-    char** gamemaster(game_t* game, char* input, player_t* game_over); // Handle the game logic
+    void gamemaster(game_t* game, char* input, player_t* game_over, char* x_out, char* o_out); // Handle the game logic
+    void print_game_info(game_t* game); // Print the game info (board, state, players, etc.
 
 #endif // _GAME_H_

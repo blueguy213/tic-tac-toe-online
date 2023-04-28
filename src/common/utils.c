@@ -44,3 +44,23 @@ char* bin2hex(const unsigned char *bin, size_t len) {
 
     return hex;
 }
+
+void print_state(State state) {
+    if (state == X) {
+        printf("X\n");
+    } else if (state == O) {
+        printf("O\n");
+    } else if (state == DRAW) {
+        printf("DRAW\n");
+    } else if (state == X_OFFERED_DRAW) {
+        printf("X_OFFERED_DRAW\n");
+    } else if (state == O_OFFERED_DRAW) {
+        printf("O_OFFERED_DRAW\n");
+    } else if (state == X_WON) {
+        printf("X_WON\n");
+    } else if (state == O_WON) {
+        printf("O_WON\n");
+    } else if (state == UNSTARTED) {
+        printf("UNSTARTED\n");
+    }
+}

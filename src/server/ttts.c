@@ -1,9 +1,6 @@
 #include "ttts.h"
 #define MAX_CLIENTS 100
 
-void *client_handler(void *arg);
-int send_to_socket(int socket, const char *str);
-
 int main(int argc, char** argv) {
     
     if (argc != 2) {
@@ -11,9 +8,7 @@ int main(int argc, char** argv) {
         return 1;
     }
 
-    pthread_t tid[MAX_CLIENTS];
-
-    int port, server_socket, client_socket, addr_size, game_index;
+    int port, server_socket, client_socket, game_index;
     int  client_count = 0;
 
     lobby_t* lobby = new_lobby(10);
@@ -22,11 +17,10 @@ int main(int argc, char** argv) {
     server_socket = check(socket(AF_INET, SOCK_STREAM, 0), "Failed to create socket");
 
     SA_IN server_addr, client_addr;
-    memset(&server_addr, 0, sizeof(server_addr));
+    
     server_addr.sin_family = AF_INET;
     server_addr.sin_addr.s_addr = htonl(INADDR_ANY);
     server_addr.sin_port = htons(port);
-    // player_t* previous_player;
     
     check(bind(server_socket, (SA*)&server_addr, sizeof(server_addr)), "Failed to bind");
     check(listen(server_socket, SERVER_BACKLOG), "Failed to listen");
@@ -54,26 +48,40 @@ int main(int argc, char** argv) {
         int play_number;
 
         sscanf(play_command, "PLAY|%d|%[^|]|", &play_number, player_name);
+        
+        // Check if the player is already in the lobby
+
 
         // Create a new player
         player_t *newplayer = malloc(sizeof(player_t));
         newplayer = new_player('X', player_name, client_addr, client_socket); // 'X' will be replaced with the proper role later
-        print_player(*newplayer);
+        print_player(newplayer);
+
         // Send the WAIT response to the client
-        char wait_response[] = "WAIT";
+        char wait_response[] = "WAIT|0|";
         write(client_socket, wait_response, strlen(wait_response));
 
         client_count = client_count + 1;
 
+        pthread_mutex_lock(&lobby->lock);
+        printf("Locked lobby\n");
         if ((game_index = add_player(lobby, newplayer)) >= 0) {
+            pthread_mutex_unlock(&lobby->lock);
+            printf("Unlocked lobby\n");
             game_thread_args_t *args = malloc(sizeof(game_thread_args_t));
             args->lobby = lobby;
             args->game_index = game_index;
-            pthread_create(&tid, NULL, client_handler, (void *)args);
-            // pthread_create(&tid[client_count / 2 - 1], NULL, client_handler, lobby->games[game_index]);
+            pthread_create(&lobby->games[game_index]->tid, NULL, client_handler, (void *)args);
         }
-
+        else {
+            pthread_mutex_unlock(&lobby->lock);
+            printf("Unlocked lobby\n");
+        }
+        pthread_mutex_lock(&lobby->lock);
+        printf("Locked lobby\n");
         print_lobby(lobby);
+        pthread_mutex_unlock(&lobby->lock);
+        printf("Unlocked lobby\n");
     }
     // Free everything
     free_lobby(lobby);
@@ -88,9 +96,7 @@ int check(int exp, const char* msg) {
     return exp;
 }
 
-void handleGame(game_t* game);
-
-void *client_handler(void* args) {
+void* client_handler(void* args) {
 
     game_thread_args_t *game_args = (game_thread_args_t *) args;
 
@@ -106,43 +112,48 @@ void *client_handler(void* args) {
 
     handleGame(game);
 
+    printf("\nGame over\n");
+
+    pthread_mutex_lock(&lobby->lock);
+    printf("Locked lobby\n");
     // close sockets
     close(game->playerX->socket);
     close(game->playerO->socket);
 
-    pthread_mutex_lock(&lobby->lock);
-    
-    free_game(lobby->games[game_index]);
-    // Remove the game from the lobby
-    remove_game(lobby, game);
-
     // Remove the players from the lobby
     remove_player(lobby, game->playerX->name, game->playerX->address);
     remove_player(lobby, game->playerO->name, game->playerO->address);
-    
+
+    // Remove the game from the lobby
+    remove_game(lobby, game);
+
     pthread_mutex_unlock(&lobby->lock);
-
-    // free memory
-    free_game(game);
-
-    pthread_exit(NULL);
+    printf("Unlocked lobby\n");
+    return NULL;
 }
 
 void handleGame(game_t* game) {
 
     fd_set readfds;
     char buffer[BUFFER_SIZE];
-    char reply_buffer[BUFFER_SIZE];
+    char* x_buffer;
+    char* o_buffer;
+    x_buffer = malloc(sizeof(char) * BUFFER_SIZE);
+    o_buffer = malloc(sizeof(char) * BUFFER_SIZE);
 
     bool running = true;
     int socket1 = game->playerX->socket;
     int socket2 = game->playerO->socket;
 
     // Send the BEGN response to both players
-    sprintf(reply_buffer, "BEGN|%c|%s|", game->playerX->role, game->playerO->name);
-    send_to_socket(socket1, reply_buffer);
-    sprintf(reply_buffer, "BEGN|%c|%s|", game->playerO->role, game->playerX->name);
-    send_to_socket(socket2, reply_buffer);
+    sprintf(x_buffer, "BEGN|%ld|%c|%s|", 3 + strlen(game->playerO->name), game->playerX->role, game->playerO->name);
+    send_to_socket(socket1, x_buffer);
+    memset(x_buffer, 0, BUFFER_SIZE);
+    sprintf(o_buffer, "BEGN|%ld|%c|%s|", 3 + strlen(game->playerX->name), game->playerO->role, game->playerX->name);
+    send_to_socket(socket2, o_buffer);
+    memset(o_buffer, 0, BUFFER_SIZE);
+
+    game->state = X;
 
     while (running) {
         FD_ZERO(&readfds); 
@@ -183,18 +194,21 @@ void handleGame(game_t* game) {
         buffer[bytes_received] = '\0';
         printf("Message from %s: %s\n", active_player->name, buffer);
 
-        char** game_output = gamemaster(game, buffer, active_player);
+        gamemaster(game, buffer, active_player, x_buffer, o_buffer);
 
-        if (game_output[0] != NULL) {
-            send_to_socket(active_socket, game_output[0]);
-            //free(game_output[0]);
-        }
-        if (game_output[1] != NULL) {
-            send_to_socket(opponent_socket, game_output[1]);
-            //free(game_output[1]);
-        }
+        print_game_info(game);
 
-        free(game_output);
+        printf("x_buffer: %s\n", x_buffer);
+        printf("o_buffer: %s\n", o_buffer);
+
+        if (strcmp(x_buffer, "") != 0) {
+            send_to_socket(active_socket, x_buffer);
+            memset(x_buffer, 0, BUFFER_SIZE);
+        }
+        if (strcmp(o_buffer, "") != 0) {
+            send_to_socket(opponent_socket, o_buffer);
+            memset(o_buffer, 0, BUFFER_SIZE);
+        }
     }
 }
 

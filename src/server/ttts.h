@@ -28,10 +28,9 @@
         int game_index;
     } game_thread_args_t;
 
-
-    void* handle_connection(void* p_client_socket);
-    void handleTwoClients(player_t player1, player_t player2);
     int check(int exp, const char* msg);
     int send_to_socket(int socket, const char *str);
+    void handleGame(game_t* game);
+    void *client_handler(void* args);
 
 #endif // _TTTS_H_

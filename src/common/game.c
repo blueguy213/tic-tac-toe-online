@@ -14,8 +14,6 @@ game_t* new_game(player_t* x, player_t* o) {
 
 void free_game(game_t* game) {
     if (game == NULL) return;
-    free_player(game->playerO);
-    free_player(game->playerX);
     free(game->board);
     free(game);
 }
@@ -40,18 +38,14 @@ void move(game_t* game, player_t* player, int x, int y) {
     if (game->state > 0) {
         if (player->role == 'X') {
             game->board[x + y * 3] = 'X';
-            game->state = O;
         } else {
             game->board[x + y * 3] = 'O';
-            game->state = X;
         }
     } else {
         if (player->role == 'X') {
             game->board[x + y * 3] = 'X';
-            game->state = O;
         } else {
             game->board[x + y * 3] = 'O';
-            game->state = X;
         }
     }
 }
@@ -120,8 +114,10 @@ void print_board_as_display(game_t* game) {
     printf(" %c | %c | %c \n---+---+---\n %c | %c | %c \n---+---+---\n %c | %c | %c \n", game->board[0], game->board[1], game->board[2], game->board[3], game->board[4], game->board[5], game->board[6], game->board[7], game->board[8]);
 }
 
-char** gamemaster(game_t* game, char* input, player_t* sender) {
-    char** output = malloc(2 * sizeof(char*));
+void gamemaster(game_t* game, char* input, player_t* sender, char* x_out, char* o_out) {
+    // char** output = malloc(2 * sizeof(char*));
+
+    print_player(sender);
 
     // Parse input
     char code[5];
@@ -132,87 +128,104 @@ char** gamemaster(game_t* game, char* input, player_t* sender) {
         sscanf(input, "PLAY|%*d|%[^|]", name);
         if (game->playerX == NULL) {
 
-            output[0] = "WAIT|0|";
-            output[1] = NULL;
-        } else if (game->playerO == NULL) {
-
-            output[0] = "WAIT|0|";
-            char buffer[256 + 8]; // Make sure the buffer is large enough to hold the name and the additional characters.
-            // sprintf(buffer, "BEGN|0|X|%s", game->playerX->name);
-            output[1] = (char*) strdup(buffer);
+            strcpy(x_out, "WAIT|0|");
+            strcpy(o_out, "");
         }
     } else if (strcmp(code, "MOVE") == 0) {
-        if (sender == NULL) {
-            output[0] = "INVL|23|!Unrecognized sender.|";
-            output[1] = NULL;
-            return output;
-        }
 
         int x, y;
-        sscanf(input, "MOVE|%*d|%d,%d|", &x, &y);
-
-        if (game->board[(x - 1) + (y - 1) * 3] == '.') {
+        char role;
+        sscanf(input, "MOVE|%*d|%c|%d,%d|", &role, &x, &y);
+        // Check if it's the sender's turn
+        if (role == 'X' && game->state != X) {
+            strcpy(x_out, "INVL|23|Not your turn|");
+            strcpy(o_out, "");
+        } else if (role == 'O' && game->state != O) {
+            strcpy(x_out, "");
+            strcpy(o_out, "INVL|23|Not your turn|");
+        } else if (game->board[(x - 1) + (y - 1) * 3] == '.') {
             move(game, sender, x - 1, y - 1);
             int game_result = check_game(game);
+            printf("Game result: %d\n", game_result);
             if (game_result < 0) {
                 if (game_result == -1) {
-                    output[0] = "OVER|5|W|X won!";
-                    output[1] = "OVER|5|L|X won!";
+                    game->state = X_WON;
+                    strcpy(x_out, "OVER|8|W|X won|");
+                    strcpy(o_out, "OVER|8|L|X won|");
                 } else if (game_result == -2) {
-                    output[0] = "OVER|5|L|O won!";
-                    output[1] = "OVER|5|W|O won!";
+                    game->state = O_WON;
+                    strcpy(x_out, "OVER|8|L|O won|");
+                    strcpy(o_out, "OVER|8|W|O won|");
                 } else {
-                    output[0] = "OVER|5|D|Draw!";
-                    output[1] = "OVER|5|D|Draw!";
+                    game->state = DRAW;
+                    strcpy(x_out, "OVER|8|D|Draw|");
+                    strcpy(o_out, "OVER|8|D|Draw|");
                 }
             } else {
+                if (game->state == X || game->state == UNSTARTED) {
+                    game->state = O;
+                } else {
+                    game->state = X;
+                }
                 char buffer[32];
-                sprintf(buffer, "MOVD|16|%c|%d,%d|%.9s|", sender->role, x, y, game->board);
-                output[0] = (char*) strdup(buffer);
-                output[1] = (char*) strdup(buffer);
+                sprintf(buffer, "MOVD|16|%c|%d,%d|%s|", sender->role, x, y, game->board);
+                strcpy(x_out, buffer);
+                strcpy(o_out, buffer);
             }
         } else {
-            output[0] = "INVL|24|That space is occupied.|";
-            output[1] = NULL;
+            strcpy(x_out, "INVL|24|That space is occupied|");
+            strcpy(o_out, "");
         }
     } else if (strcmp(code, "RSGN") == 0) {
-        if (sender == NULL) {
-            output[0] = "INVL|23|!Unrecognized sender.|";
-            output[1] = NULL;
-            return output;
-        }
-
         resign(game, sender);
         if (sender->role == 'X') {
-            output[0] = "OVER|5|L|X resigned!";
-            output[1] = "OVER|5|W|X resigned!";
+            strcpy(x_out, "OVER|5|L|X resigned|");
+            strcpy(o_out, "OVER|5|W|X resigned|");
         } else {
-            output[0] = "OVER|5|W|O resigned!";
-            output[1] = "OVER|5|L|O resigned!";
+            strcpy(x_out, "OVER|5|W|O resigned|");
+            strcpy(o_out, "OVER|5|L|O resigned|");
         }
-   } else if (strcmp(code, "DRAW") == 0) {
-    if (sender == NULL) {
-        output[0] = "INVL|23|!Unrecognized sender.|";
-        output[1] = NULL;
-        return output;
+    } else if (strcmp(code, "DRAW") == 0) {
+        char message;
+        sscanf(input, "DRAW|%*d|%c|", &message);
+        if (message == 'S') {
+            draw(game, sender);
+            strcpy(x_out, "DRAW|2|S|");
+            strcpy(o_out, "DRAW|2|S|");
+        } else if (message == 'A') {
+            if ((game->state != X_OFFERED_DRAW && sender->role == 'X') || (game->state != O_OFFERED_DRAW && sender->role == 'O')) {
+                strcpy(x_out, "INVL|23|Not your turn|");
+                strcpy(o_out, "");
+            } else {
+                draw(game, sender);
+                strcpy(x_out, "DRAW|2|A|");
+                strcpy(o_out, "DRAW|2|A|");
+            }
+            draw(game, sender);
+        } else if (message == 'R') {
+            if ((game->state != X_OFFERED_DRAW && sender->role == 'X') || (game->state != O_OFFERED_DRAW && sender->role == 'O')) {
+                strcpy(x_out, "INVL|23|Not your turn|");
+                strcpy(o_out, "");
+            } else {
+                if (sender->role == 'X') {
+                    game->state = X;
+                } else {
+                    game->state = O;
+                }
+                strcpy(x_out, "DRAW|2|R|");
+                strcpy(o_out, "DRAW|2|R|");
+            }
+        }
+    } else {
+        strcpy(x_out, "INVL|23|!Unrecognized command.|");
+        strcpy(o_out, "");
     }
-
-    char message;
-    sscanf(input, "DRAW|%*d|%c|", &message);
-    if (message == 'S') {
-        draw(game, sender);
-        output[0] = "DRAW|2|S|";
-        output[1] = "DRAW|2|S|";
-    } else if (message == 'A') {
-        output[0] = "OVER|5|D|Draw accepted!";
-        output[1] = "OVER|5|D|Draw accepted!";
-    } else if (message == 'R') {
-        output[0] = "DRAW|2|R|";
-        output[1] = "DRAW|2|R|";
-    }
-} else {
-    output[0] = "INVL|23|!Unrecognized command.|";
-    output[1] = NULL;
 }
-return output;
+
+void print_game_info(game_t* game) {
+    printf("Game info:\n");
+    printf("\tPlayer X: %s", game->playerX == NULL ? "NULL" : game->playerX->name);
+    printf("\tPlayer O: %s", game->playerO == NULL ? "NULL" : game->playerO->name);
+    printf("\tState: %d\n", game->state);
+    printf("\tBoard: %s\n", game->board);
 }

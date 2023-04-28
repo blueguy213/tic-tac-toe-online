@@ -31,6 +31,7 @@
 
     void err_and_kill(const char *fmt, ...);
     char* bin2hex(const unsigned char *input, size_t len);
+    void print_state(State state);
 
     typedef struct sockaddr SA;
     typedef struct sockaddr_in SA_IN;
