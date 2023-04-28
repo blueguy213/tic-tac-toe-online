@@ -114,11 +114,14 @@ void print_board_as_display(game_t* game) {
     printf(" %c | %c | %c \n---+---+---\n %c | %c | %c \n---+---+---\n %c | %c | %c \n", game->board[0], game->board[1], game->board[2], game->board[3], game->board[4], game->board[5], game->board[6], game->board[7], game->board[8]);
 }
 
+void board_to_string(game_t* game, char* buffer) {
+    snprintf(buffer, 100, " %c | %c | %c \n---+---+---\n %c | %c | %c \n---+---+---\n %c | %c | %c \n", game->board[0], game->board[1], game->board[2], game->board[3], game->board[4], game->board[5], game->board[6], game->board[7], game->board[8]);
+}
+
 void gamemaster(game_t* game, char* input, player_t* sender, char* x_out, char* o_out) {
-    // char** output = malloc(2 * sizeof(char*));
 
+    printf("Sender: ");
     print_player(sender);
-
     // Parse input
     char code[5];
     sscanf(input, "%4[^|]", code);
